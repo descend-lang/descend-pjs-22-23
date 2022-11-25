@@ -120,13 +120,12 @@ namespace descend {
 
     //cl:Buffer aufruf als Pointer in Kernel als *pointer
     template<std::size_t num_work_groups, std::size_t local_size, typename ...Args>
-    void exec(const descend::Gpu * const gpu, const std::string file_name, GpuBuffer<Args>*... args) {
-        std::string kernel_source = load_program(file_name);
+    void exec(const descend::Gpu * const gpu, const std::string KERNEL_SOURCE, GpuBuffer<Args>*... args) {
 
         //TODO: Build Program in own function
         //TODO: Define Global Error-Handler for OpenCL (int-code handling and Exception Handling)
         cl_int err;
-        cl::Program program(*gpu->context, kernel_source, false, &err);
+        cl::Program program(*gpu->context, KERNEL_SOURCE, false, &err);
         if (err != CL_SUCCESS) {
             throw std::runtime_error(getErrorString(err));
         }
@@ -134,7 +133,7 @@ namespace descend {
         try {
             program.build(*gpu->device);
 
-            cl::Kernel kernel(program, "reduce_shared_mem", &err);
+            cl::Kernel kernel(program, "__kernel__", &err);
             std::cout << "Created Kernel" << std::endl;
 
             cl_uint index = 0;
@@ -254,14 +253,4 @@ const char *getErrorString(cl_int error)
         case -1005: return "CL_D3D10_RESOURCE_NOT_ACQUIRED_KHR";
         default: return "Unknown OpenCL error";
     }
-}
-
-std::string load_program(const std::string &input) {
-    std::ifstream stream(input.c_str());
-    if (!stream.is_open()) {
-        std::cout << "Cannot open file: " << input << std::endl;
-        exit(1);
-    }
-    return std::string(std::istreambuf_iterator<char>(stream),
-                       (std::istreambuf_iterator<char>()));
 }
