@@ -1,14 +1,20 @@
 use crate::ast::Nat;
+use std::collections::HashMap;
 
 pub(super) type Program = Vec<Item>;
 
 // TODO big difference in sizes beteween variants
+#[derive(Clone, Debug)]
 pub(super) enum Item {
-    Include(String),
+    Include{
+        name: String,
+        content: String,
+    },
     FunDef {
         name: String,
         //TODO: This needs to be handeled differently for Kernel and C++ Functions
         templ_params: Vec<TemplParam>,
+        templ_values: Vec<Vec<Expr>>,
         params: Vec<ParamDecl>,
         ret_ty: Ty,
         body: Stmt,
@@ -141,6 +147,7 @@ pub(super) enum BinOp {
     Neq,
 }
 
+#[derive(Clone, Debug)]
 pub(super) enum TemplParam {
     Value { param_name: String, ty: Ty },
     TyName { name: String },

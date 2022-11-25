@@ -51,7 +51,7 @@ fn clang_format(code: &str) -> String {
 impl std::fmt::Display for Item {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            Item::Include(path) => write!(f, "#include \"{}\"", path),
+            Item::Include{content, ..} => write!(f, "#include \"{}\"", content),
             Item::FunDef {
                 name,
                 templ_params,
@@ -59,6 +59,8 @@ impl std::fmt::Display for Item {
                 ret_ty,
                 body,
                 is_gpu_function,
+                //Template Values are openCL only (cuda can handle Template Params itself)
+                ..
             } => {
                 if !templ_params.is_empty() {
                     write!(f, "template<")?;
@@ -73,6 +75,7 @@ impl std::fmt::Display for Item {
                 )?;
                 fmt_vec(f, params, ",\n")?;
                 writeln!(f, "\n) -> {} {{", ret_ty)?;
+
                 write!(f, "{}", body)?;
                 writeln!(f, "\n}}")
             }

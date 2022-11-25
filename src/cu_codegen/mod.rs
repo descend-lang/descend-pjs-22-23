@@ -29,7 +29,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         })
         .cloned()
         .collect::<Vec<desc::FunDef>>();
-    let cu_program = std::iter::once(cu::Item::Include("descend.cuh".to_string()))
+    let cu_program = std::iter::once(cu::Item::Include{name: "Header".to_string(), content: "descend.cuh".to_string()})
         .chain(
             fun_defs_to_be_generated
                 .iter()
@@ -175,6 +175,8 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
             idx_checks,
         ),
         is_gpu_function: is_dev_fun(*exec),
+        //Template Values are openCL only (cuda can handle Template Params itself)
+        templ_values: vec!()
     }
 }
 
