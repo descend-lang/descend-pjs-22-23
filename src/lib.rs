@@ -4,10 +4,11 @@ use crate::error::ErrorReported;
 mod ast;
 #[macro_use]
 mod cu_codegen;
+#[macro_use]
+mod cl_codegen;
 pub mod error;
 mod parser;
 mod ty_check;
-#[macro_use]
 mod cpp_ast;
 
 pub fn compile(file_path: &str) -> Result<String, ErrorReported> {

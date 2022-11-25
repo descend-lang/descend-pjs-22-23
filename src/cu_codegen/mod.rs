@@ -1,6 +1,6 @@
 mod printer;
 
-use crate::cpp_ast as cu;
+use crate::{ast, cpp_ast as cu};
 use crate::ast as desc;
 use crate::ast::visit::Visit;
 use crate::ast::visit_mut::VisitMut;
@@ -17,7 +17,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         .iter()
         .filter(|f| {
             f.param_decls.iter().all(|p| {
-                !is_shape_ty(p.ty.as_ref().unwrap())
+                !ast::utils::is_shape_ty(p.ty.as_ref().unwrap())
                     && !matches!(
                         &p.ty.as_ref().unwrap().ty,
                         desc::TyKind::Data(desc::DataTy {
@@ -524,7 +524,7 @@ fn gen_decl_init(
     mutbl: Mutability,
     e: &desc::Expr,
 ) -> cu::Stmt {
-    if is_shape_ty(e.ty.as_ref().unwrap()) {
+    if ast::utils::is_shape_ty(e.ty.as_ref().unwrap()) {
         codegen_ctx.shape_ctx.insert(
             &ident.name,
             ShapeExpr::create_from(e, &codegen_ctx.shape_ctx),
@@ -681,7 +681,7 @@ fn gen_for_each(
         &ident.name,
         ShapeExpr::Idx {
             idx: desc::Nat::Ident(desc::Ident::new(&i_name)),
-            shape: Box::new(if is_shape_ty(coll_expr.ty.as_ref().unwrap()) {
+            shape: Box::new(if ast::utils::is_shape_ty(coll_expr.ty.as_ref().unwrap()) {
                 ShapeExpr::create_from(coll_expr, &codegen_ctx.shape_ctx)
             } else {
                 ShapeExpr::ToView {
@@ -1284,7 +1284,7 @@ fn gen_expr(
             idx_checks,
         )),
         Proj(tuple, idx) => {
-            if is_shape_ty(expr.ty.as_ref().unwrap()) {
+            if ast::utils::is_shape_ty(expr.ty.as_ref().unwrap()) {
                 CheckedExpr::Expr(gen_shape(
                     &ShapeExpr::create_from(expr, &codegen_ctx.shape_ctx),
                     vec![],
@@ -1791,7 +1791,7 @@ fn get_data_param_tys(fun: &desc::Expr) -> Vec<desc::Ty> {
     if let desc::TyKind::Fn(_, param_tys, _, _) = &fun.ty.as_ref().unwrap().ty {
         param_tys
             .iter()
-            .filter(|p_ty| !is_shape_ty(&p_ty))
+            .filter(|p_ty| !ast::utils::is_shape_ty(&p_ty))
             .cloned()
             .collect()
     } else {
@@ -1844,7 +1844,7 @@ fn partial_app_gen_args(fun: &desc::FunDef, gen_args: &[desc::ArgKinded]) -> des
 
 fn contains_shape_or_th_hierchy_params(param_decls: &[desc::ParamDecl]) -> bool {
     param_decls.iter().any(|p| {
-        is_shape_ty(p.ty.as_ref().unwrap())
+        ast::utils::is_shape_ty(p.ty.as_ref().unwrap())
             || matches!(
                 p.ty.as_ref().unwrap().ty,
                 desc::TyKind::Data(desc::DataTy {
@@ -1862,7 +1862,7 @@ fn filter_and_map_shape_th_hierchy_params<'a>(
 ) -> Vec<(&'a desc::ParamDecl, &'a desc::Expr)> {
     let (reducable_parms_with_args, data_params_with_args): (Vec<_>, Vec<_>) =
         param_decls.iter().zip(args.iter()).partition(|&(p, _)| {
-            is_shape_ty(p.ty.as_ref().unwrap())
+            ast::utils::is_shape_ty(p.ty.as_ref().unwrap())
                 || matches!(
                     &p.ty.as_ref().unwrap().ty,
                     desc::TyKind::Data(desc::DataTy {
@@ -1874,7 +1874,7 @@ fn filter_and_map_shape_th_hierchy_params<'a>(
     let (shape_params_with_args, th_hierchy_params_with_args): (Vec<_>, Vec<_>) =
         reducable_parms_with_args
             .iter()
-            .partition(|&(p, _)| is_shape_ty(p.ty.as_ref().unwrap()));
+            .partition(|&(p, _)| ast::utils::is_shape_ty(p.ty.as_ref().unwrap()));
     for (p, arg) in shape_params_with_args {
         codegen_ctx.shape_ctx.insert(
             &p.ident.name,
@@ -2755,7 +2755,7 @@ impl ShapeExpr {
             shapes: elems
                 .iter()
                 .map(|e| {
-                    if is_shape_ty(e.ty.as_ref().unwrap()) {
+                    if ast::utils::is_shape_ty(e.ty.as_ref().unwrap()) {
                         ViewOrExpr::V(ShapeExpr::create_from(e, shape_ctx))
                     } else {
                         ViewOrExpr::E(e.clone())
@@ -2928,30 +2928,6 @@ fn inline_par_for_funs(mut fun_def: desc::FunDef, comp_unit: &[desc::FunDef]) ->
     let mut inliner = InlineParForFuns { comp_unit };
     inliner.visit_fun_def(&mut fun_def);
     fun_def
-}
-
-fn is_shape_ty(ty: &desc::Ty) -> bool {
-    match &ty.ty {
-        desc::TyKind::Data(desc::DataTy {
-            dty: desc::DataTyKind::Ref(_, _, _, arr_vty),
-            ..
-        }) => {
-            matches!(
-                arr_vty.as_ref(),
-                desc::DataTy {
-                    dty: desc::DataTyKind::ArrayShape(_, _),
-                    ..
-                }
-            )
-        }
-        desc::TyKind::Data(desc::DataTy {
-            dty: desc::DataTyKind::Tuple(elem_dtys),
-            ..
-        }) => elem_dtys
-            .iter()
-            .all(|d| is_shape_ty(&desc::Ty::new(desc::TyKind::Data(d.clone())))),
-        _ => false,
-    }
 }
 
 static mut LABEL_COUNTER: AtomicI32 = AtomicI32::new(0);

@@ -4,8 +4,33 @@ use crate::ast::{
 };
 use std::collections::HashSet;
 use std::sync::atomic::{AtomicI32, Ordering};
+use crate::ast;
 
 static mut COUNTER: AtomicI32 = AtomicI32::new(0);
+
+pub fn is_shape_ty(ty: &ast::Ty) -> bool {
+    match &ty.ty {
+        ast::TyKind::Data(ast::DataTy {
+                               dty: ast::DataTyKind::Ref(_, _, _, arr_vty),
+                               ..
+                           }) => {
+            matches!(
+                arr_vty.as_ref(),
+                ast::DataTy {
+                    dty: ast::DataTyKind::ArrayShape(_, _),
+                    ..
+                }
+            )
+        }
+        ast::TyKind::Data(ast::DataTy {
+                               dty: ast::DataTyKind::Tuple(elem_dtys),
+                               ..
+                           }) => elem_dtys
+            .iter()
+            .all(|d| is_shape_ty(&ast::Ty::new(ast::TyKind::Data(d.clone())))),
+        _ => false,
+    }
+}
 
 pub(crate) fn fresh_ident<F, R>(name: &str, ident_constr: F) -> R
 where
