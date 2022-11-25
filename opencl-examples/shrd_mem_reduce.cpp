@@ -2,6 +2,35 @@
 #define WG 4
 #define WI 2
 
+const std::string kernel_source = R"(
+#define WG 4
+#define WI 2
+
+__kernel void __kernel__(__global const int *const a, __global int *const out) {
+
+    int id_local = get_local_id(0);
+    int id_group = get_group_id(0);
+    int id_global = get_global_id(0);
+    __local int tmp[WI];
+
+    {
+        {tmp[id_local] = a[id_global];}
+
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        for (size_t k = (WI / 2); k > 0; k = k / 2 ) {
+            if (id_local < k) {
+                tmp[id_local] = tmp[id_local] + tmp[id_local + k];
+            }
+        }
+        barrier(CLK_LOCAL_MEM_FENCE);
+
+        if (id_local < 1) {
+            out[id_group] = tmp[id_local];
+        }
+    }
+}
+)";
 
 template <std::size_t wg, std::size_t wi>
 auto reduce_shared_mem(cl_int *const a_h, cl_int *const out_h) -> void;
@@ -36,7 +65,7 @@ auto reduce_shared_mem(cl_int *const a_h, cl_int *const out_h) -> void {
     const auto a_d = descend::gpu_alloc_copy<descend::array<descend::i32, (wg * wi)>>( gpu, a_h);
     const auto out_d = descend::gpu_alloc_copy<descend::array<descend::i32, wg>>( gpu, out_h);
 
-    descend::exec<wg, wi>(gpu, "shrd_mem_reduce.cl", a_d, out_d);
+    descend::exec<wg, wi>(gpu, kernel_source, a_d, out_d);
 
     descend::copy_to_host(*out_d, out_h);
 
