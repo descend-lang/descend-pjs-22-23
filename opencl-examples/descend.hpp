@@ -120,12 +120,12 @@ namespace descend {
 
     //cl:Buffer aufruf als Pointer in Kernel als *pointer
     template<std::size_t num_work_groups, std::size_t local_size, typename ...Args>
-    void exec(const descend::Gpu * const gpu, const std::string kernel_source, GpuBuffer<Args>*... args) {
+    void exec(const descend::Gpu * const gpu, const std::string KERNEL_SOURCE, GpuBuffer<Args>*... args) {
 
         //TODO: Build Program in own function
         //TODO: Define Global Error-Handler for OpenCL (int-code handling and Exception Handling)
         cl_int err;
-        cl::Program program(*gpu->context, kernel_source, false, &err);
+        cl::Program program(*gpu->context, KERNEL_SOURCE, false, &err);
         if (err != CL_SUCCESS) {
             throw std::runtime_error(getErrorString(err));
         }

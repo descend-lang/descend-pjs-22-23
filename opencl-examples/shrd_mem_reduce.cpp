@@ -2,7 +2,7 @@
 #define WG 4
 #define WI 2
 
-const std::string kernel_source = R"(
+const std::string KERNEL_SOURCE = R"(
 #define WG 4
 #define WI 2
 
@@ -65,7 +65,7 @@ auto reduce_shared_mem(cl_int *const a_h, cl_int *const out_h) -> void {
     const auto a_d = descend::gpu_alloc_copy<descend::array<descend::i32, (wg * wi)>>( gpu, a_h);
     const auto out_d = descend::gpu_alloc_copy<descend::array<descend::i32, wg>>( gpu, out_h);
 
-    descend::exec<wg, wi>(gpu, kernel_source, a_d, out_d);
+    descend::exec<wg, wi>(gpu, KERNEL_SOURCE, a_d, out_d);
 
     descend::copy_to_host(*out_d, out_h);
 

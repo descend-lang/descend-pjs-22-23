@@ -1,6 +1,6 @@
 #include "descend.hpp"
 
-const std::string kernel_source = R"(
+const std::string KERNEL_SOURCE = R"(
 #define WI 256
 
 __kernel void __kernel__(__global int* array) {
@@ -40,7 +40,7 @@ auto reduce_tree(cl_int *const array_h) -> void {
     auto gpu = descend::gpu_device(0);
     const auto array_d = descend::gpu_alloc_copy<descend::array<descend::i32, (wg * wi)>>( gpu, array_h);
 
-    descend::exec<wg, wi>(gpu, kernel_source, array_d);
+    descend::exec<wg, wi>(gpu, KERNEL_SOURCE, array_d);
 
     descend::copy_to_host(*array_d, array_h);
     for (std::size_t i = 0; i < wg * wi; i = i + 1) {
