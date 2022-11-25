@@ -10,7 +10,6 @@ use std::collections::HashMap;
 use crate::error::ErrorReported;
 pub use source::*;
 
-use crate::ast::utils::fresh_ident;
 use crate::ast::visit_mut::VisitMut;
 
 pub fn parse<'a>(source: &'a SourceCode<'a>) -> Result<CompilUnit, ErrorReported> {

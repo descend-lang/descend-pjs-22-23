@@ -1,11 +1,10 @@
-mod cu_ast;
 mod printer;
 
+use crate::cpp_ast as cu;
 use crate::ast as desc;
 use crate::ast::visit::Visit;
 use crate::ast::visit_mut::VisitMut;
 use crate::ast::{utils, Mutability};
-use cu_ast as cu;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -36,7 +35,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
                 .iter()
                 .map(|fun_def| gen_fun_def(fun_def, &compil_unit.fun_defs, idx_checks)),
         )
-        .collect::<cu::CuProgram>();
+        .collect::<cu::Program>();
     printer::print(&cu_program)
 }
 
@@ -175,7 +174,7 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
             false,
             idx_checks,
         ),
-        is_dev_fun: is_dev_fun(*exec),
+        is_gpu_function: is_dev_fun(*exec),
     }
 }
 
@@ -215,7 +214,7 @@ fn gen_stmt(
                     } else {
                         gen_ty(&ty.as_ref().ty, desc::Mutability::Mut)
                     },
-                    Some(cu::GpuAddrSpace::Shared),
+                    Some(cu::GpuAddrSpace::Local),
                 ),
                 _ => (gen_ty(&ty.as_ref().ty, desc::Mutability::Mut), None),
             };
@@ -561,7 +560,7 @@ fn gen_decl_init(
         cu::Stmt::VarDecl {
             name: ident.name.clone(),
             ty: cu_ty,
-            addr_space: Some(cu::GpuAddrSpace::Shared),
+            addr_space: Some(cu::GpuAddrSpace::Local),
             expr: None,
         }
     } else {
@@ -610,7 +609,7 @@ fn has_generatable_ty(e: &desc::Expr) -> bool {
 }
 
 fn gen_if_else(
-    cond: cu_ast::Expr,
+    cond: cu::Expr,
     e_tt: &desc::Expr,
     e_ff: &desc::Expr,
     codegen_ctx: &mut CodegenCtx,
@@ -640,7 +639,7 @@ fn gen_if_else(
 }
 
 fn gen_if(
-    cond: cu_ast::Expr,
+    cond: cu::Expr,
     e_tt: &desc::Expr,
     codegen_ctx: &mut CodegenCtx,
     comp_unit: &[desc::FunDef],
@@ -2356,7 +2355,7 @@ fn gen_ty(ty: &desc::TyKind, mutbl: desc::Mutability) -> cu::Ty {
                 };
                 cu::Ty::Ptr(
                     Box::new(gen_ty(&desc::TyKind::Data(dty), mutbl)),
-                    Some(cu::GpuAddrSpace::Shared),
+                    Some(cu::GpuAddrSpace::Local),
                 )
             } else {
                 let buff_kind = match mem {

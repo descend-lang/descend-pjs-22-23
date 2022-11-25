@@ -317,9 +317,9 @@ pub enum ExprKind {
         Box<PlaceExpr>,
     ),
     Range(Box<Expr>, Box<Expr>),
-    // Deref a non place expression; ONLY for codegen
+    // Deref a non place expression; ONLY for cu_codegen
     Deref(Box<Expr>),
-    // Index into an array; ONLY for codegen
+    // Index into an array; ONLY for cu_codegen
     Idx(Box<Expr>, Nat),
 }
 
@@ -604,7 +604,7 @@ impl PlaceExpr {
         }
     }
 
-    // TODO refactor. Places are only needed during typechecking and codegen
+    // TODO refactor. Places are only needed during typechecking and cu_codegen
     pub fn to_place(&self) -> Option<internal::Place> {
         if self.is_place() {
             Some(self.to_pl_ctx_and_most_specif_pl().1)

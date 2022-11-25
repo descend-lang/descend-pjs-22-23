@@ -1,6 +1,6 @@
 use crate::ast::Nat;
 
-pub(super) type ClProgram = Vec<Item>;
+pub(super) type Program = Vec<Item>;
 
 // TODO big difference in sizes beteween variants
 pub(super) enum Item {
@@ -12,7 +12,7 @@ pub(super) enum Item {
         params: Vec<ParamDecl>,
         ret_ty: Ty,
         body: Stmt,
-        is_kernel: bool,
+        is_gpu_function: bool,
     },
 }
 
@@ -66,6 +66,13 @@ pub(super) enum Expr {
     Assign {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
+    },
+    Lambda {
+        captures: Vec<crate::ast::Ident>,
+        params: Vec<ParamDecl>,
+        body: Box<Stmt>,
+        ret_ty: Ty,
+        is_dev_fun: bool,
     },
     // Removed Lambda since Kernel is passed as String to exec
     FunCall {
@@ -155,6 +162,8 @@ pub(super) enum GpuAddrSpace {
 #[derive(Clone, Debug)]
 pub(super) enum Ty {
     Scalar(ScalarTy),
+    //TODO: Refactor to cu only module?
+    Atomic(ScalarTy),
     Tuple(Vec<Ty>),
     Array(Box<Ty>, Nat),
     CArray(Box<Ty>, Nat),
@@ -182,7 +191,7 @@ pub(super) enum BufferKind {
     CpuMem,
     GpuGlobal,
     //TODO: Do we need this
-    //Ident(String),
+    Ident(String),
 }
 
 #[derive(Clone, Debug)]

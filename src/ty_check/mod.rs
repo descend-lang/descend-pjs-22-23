@@ -222,7 +222,7 @@ impl TyChecker {
             }
             ExprKind::Deref(_) => panic!(
                 "Dereferencing a non place expression is not a valid Descend \
-        program and only exists for codegen."
+        program and only exists for cu_codegen."
             ),
         };
 

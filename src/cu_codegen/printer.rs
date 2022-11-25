@@ -1,7 +1,7 @@
-use super::cu_ast::{
+use crate::cpp_ast::{
     BinOp, BufferKind, Expr, Item, ParamDecl, ScalarTy, Stmt, TemplParam, TemplateArg, Ty, UnOp,
 };
-use crate::codegen::cu_ast::{GpuAddrSpace, Lit};
+use crate::cpp_ast::{GpuAddrSpace, Lit};
 use std::fmt::Formatter;
 use std::env;
 
@@ -58,7 +58,7 @@ impl std::fmt::Display for Item {
                 params,
                 ret_ty,
                 body,
-                is_dev_fun,
+                is_gpu_function,
             } => {
                 if !templ_params.is_empty() {
                     write!(f, "template<")?;
@@ -68,7 +68,7 @@ impl std::fmt::Display for Item {
                 writeln!(
                     f,
                     "{}auto {}(",
-                    if *is_dev_fun { "__device__ " } else { "" },
+                    if *is_gpu_function { "__device__ " } else { "" },
                     name
                 )?;
                 fmt_vec(f, params, ",\n")?;
@@ -116,7 +116,7 @@ impl std::fmt::Display for Stmt {
                 write!(f, "{}", last)
             }
             Expr(expr) => {
-                if let super::cu_ast::Expr::Empty = expr {
+                if let crate::cpp_ast::Expr::Empty = expr {
                     Ok(())
                 } else {
                     write!(f, "{};", expr)
@@ -302,7 +302,7 @@ impl std::fmt::Display for GpuAddrSpace {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             GpuAddrSpace::Global => write!(f, ""),
-            GpuAddrSpace::Shared => write!(f, "__shared__"),
+            GpuAddrSpace::Local => write!(f, "__shared__"),
             GpuAddrSpace::Constant => write!(f, "__constant__"),
         }
     }
