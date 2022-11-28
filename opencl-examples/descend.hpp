@@ -18,6 +18,11 @@ inline void check_opencl_err(const cl_int err, const char * const file, const in
 namespace descend {
 
     using i32 = cl_int;
+    using u32 = cl_uint;
+    using f32 = cl_float;
+    // Only OpenCL 1.2+ or with extension cl_khr_fp64
+    using f64 = cl_double;
+    // Todo: As per openCL Specification it is not allowed to pass bool to a kernel
 
     template<typename T, std::size_t n>
     using array = std::array<T, n>;
