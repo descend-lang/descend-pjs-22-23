@@ -8,6 +8,7 @@ use crate::ast::{utils, Mutability};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
+use crate::cpp_codegen as cpp;
 
 // Precondition. all function definitions are successfully typechecked and
 // therefore every subexpression stores a type
@@ -2217,35 +2218,6 @@ fn gen_shape(
             }
         }
         ve => panic!("unexpected, found: {:?}", ve),
-    }
-}
-
-fn gen_templ_params(ty_idents: &[desc::IdentKinded]) -> Vec<cu::TemplParam> {
-    ty_idents
-        .iter()
-        .filter_map(|ty_ident| {
-            if !matches!(ty_ident.kind, desc::Kind::Provenance) {
-                Some(gen_templ_param(ty_ident))
-            } else {
-                None
-            }
-        })
-        .collect()
-}
-
-fn gen_templ_param(ty_ident: &desc::IdentKinded) -> cu::TemplParam {
-    let name = ty_ident.ident.name.clone();
-    match ty_ident.kind {
-        desc::Kind::Nat => cu::TemplParam::Value {
-            param_name: name,
-            ty: cu::Ty::Scalar(cu::ScalarTy::SizeT),
-        },
-        desc::Kind::Memory => cu::TemplParam::Value {
-            param_name: name,
-            ty: cu::Ty::Scalar(cu::ScalarTy::Memory),
-        },
-        desc::Kind::Ty => cu::TemplParam::TyName { name },
-        _ => panic!("Cannot generate template parameter for {:?}", ty_ident.kind),
     }
 }
 

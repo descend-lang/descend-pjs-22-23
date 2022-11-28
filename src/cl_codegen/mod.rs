@@ -3,6 +3,10 @@ use std::collections::HashMap;
 use crate::{ast, cpp_ast as cl};
 use crate::ast as desc;
 use crate::ast::{utils};
+use crate::cpp_ast::Item;
+use crate::cu_codegen as cu;
+use crate::cu_codegen::{CodegenCtx, gen_ty};
+use crate::cpp_codegen as cpp;
 
 mod printer;
 
@@ -56,16 +60,37 @@ fn gen_and_add_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_ch
     //TODO: Template Functions Definitionen
     //TODO: main Kernel Function kann auch getemplated sein. Wie rufen wir diese dann aus Host auf?
 
-    let item = cl::Item::FunDef {
-        name: name.clone(),
-        //templ_params: gen_templ_params(ty_idents),
-        templ_params: vec![],
-        templ_values: vec![],
-        params: vec![],
-        ret_ty: cl::Ty::Scalar(cl::ScalarTy::F32),
-        body: cl::Stmt::Skip,
-        is_gpu_function: false,
+    // We remove the item, so ownership is transferred from the map to this function (since this function is the owner for the case where no Item exists for the name)
+    // We transfer ownership back to the map when we insert the item at the end of this function
+    let item = match item_map.remove(name) {
+        // Case where we haven't iterated over a function call yet
+        None => cl::Item::FunDef {
+            name: name.clone(),
+            templ_params: cpp::gen_templ_params(ty_idents),
+            params: cu::gen_param_decls(params),
+            ret_ty: cu::gen_ty(&desc::TyKind::Data(ret_ty.clone()), desc::Mutability::Mut),
+            body: cu::gen_stmt(
+                body_expr,
+                !matches!(
+                ret_ty,
+                desc::DataTy {
+                    dty: desc::DataTyKind::Scalar(desc::ScalarTy::Unit),
+                    ..
+                }
+            ),
+                &mut cu::CodegenCtx::new(),
+                comp_unit,
+                false,
+                idx_checks
+            ),
+            is_gpu_function: cu::is_dev_fun(*exec),
+            //Template Values are openCL only (cuda can handle Template Params itself)
+            templ_values: vec!()
+        },
+        // Case where some other function Definition already called this (templated) function in it's body
+        Some(existing_item) => existing_item
     };
 
-    match item { cl::Item::FunDef {ref name, ..}|cl::Item::Include {ref name, ..} => item_map.insert(name.to_string(), item.clone())};
+    // Put our function Definition into the map and transfer ownership to the map
+    match item { cl::Item::FunDef {ref name, ..}|cl::Item::Include {ref name, ..} => item_map.insert(name.to_string(), item)};
 }
