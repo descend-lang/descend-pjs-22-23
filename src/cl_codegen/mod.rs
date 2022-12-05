@@ -40,10 +40,23 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
 
     //TODO: Iterate over function definitions with template Parameters and duplicate them for each entry in Parameter Values
 
-    let cl_program:Vec<cl::Item>;
-    cl_program = cl_program_map.into_iter().map(|entry| entry.1).collect();
+    let mut cl_cpu_program:Vec<cl::Item> = vec![];
+    let mut cl_gpu_program:Vec<cl::Item> = vec![];
 
-    printer::print(&cl_program)
+    cl_program_map.into_iter().map(|entry| entry.1).for_each(|item| {
+        match item {
+            Item::Include { .. }  => cl_cpu_program.push(item),
+            Item::FunDef { is_gpu_function, .. } => {
+                if is_gpu_function {
+                   cl_gpu_program.push(item);
+                } else {
+                    cl_cpu_program.push(item);
+                }
+            }
+        }
+    });
+
+    printer::print(&cl_cpu_program, &cl_gpu_program)
 }
 
 fn gen_and_add_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bool, item_map: &mut HashMap<String, cl::Item>) {
