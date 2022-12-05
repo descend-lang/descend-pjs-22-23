@@ -64,29 +64,7 @@ fn gen_and_add_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_ch
     // We transfer ownership back to the map when we insert the item at the end of this function
     let item = match item_map.remove(name) {
         // Case where we haven't iterated over a function call yet
-        None => cl::Item::FunDef {
-            name: name.clone(),
-            templ_params: cpp::gen_templ_params(ty_idents),
-            params: cu::gen_param_decls(params),
-            ret_ty: cu::gen_ty(&desc::TyKind::Data(ret_ty.clone()), desc::Mutability::Mut),
-            body: cu::gen_stmt(
-                body_expr,
-                !matches!(
-                ret_ty,
-                desc::DataTy {
-                    dty: desc::DataTyKind::Scalar(desc::ScalarTy::Unit),
-                    ..
-                }
-            ),
-                &mut cu::CodegenCtx::new(),
-                comp_unit,
-                false,
-                idx_checks
-            ),
-            is_gpu_function: cu::is_dev_fun(*exec),
-            //Template Values are openCL only (cuda can handle Template Params itself)
-            templ_values: vec!()
-        },
+        None => cl::Item::new_fun_def(name.clone()),
         // Case where some other function Definition already called this (templated) function in it's body
         Some(existing_item) => existing_item
     };

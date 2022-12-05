@@ -22,6 +22,21 @@ pub(super) enum Item {
     },
 }
 
+impl Item {
+    pub fn new_fun_def(name: String) -> Item {
+        Item::FunDef {
+            name,
+            templ_params: vec![],
+            templ_values: vec![],
+            params: vec![],
+            // Empty return type is unit ()
+            ret_ty: Ty::Tuple(vec![]),
+            body: Stmt::Skip,
+            is_gpu_function: false
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub(super) struct ParamDecl {
     pub(super) name: String,
