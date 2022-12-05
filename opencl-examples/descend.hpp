@@ -1,4 +1,6 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
+#define BOOL_TRUE 1
+#define BOOL_FALSE 0
 
 #include <CL/opencl.hpp>
 #include <iostream>
@@ -22,6 +24,8 @@ namespace descend {
     using f32 = cl_float;
     // Only OpenCL 1.2+ or with extension cl_khr_fp64
     using f64 = cl_double;
+    // OpenCL doesn't permit bool Kernel Params
+    using bool = cl_char;
     // Todo: As per openCL Specification it is not allowed to pass bool to a kernel
 
     template<typename T, std::size_t n>
