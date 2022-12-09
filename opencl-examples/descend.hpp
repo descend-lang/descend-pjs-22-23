@@ -25,7 +25,7 @@ namespace descend {
     // Only OpenCL 1.2+ or with extension cl_khr_fp64
     using f64 = cl_double;
     // OpenCL doesn't permit bool Kernel Params
-    using bool = cl_char;
+    using boolean = cl_char;
     // Todo: As per openCL Specification it is not allowed to pass bool to a kernel
 
     template<typename T, std::size_t n>
@@ -92,11 +92,27 @@ namespace descend {
         cl::Buffer* buffer;
         static constexpr std::size_t size = n * sizeof(DescendType);
 
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType default_value) : gpu_{gpu} {
+            auto init_ptr = new descend::array<DescendType, n>();
+            std::fill(init_ptr->begin(), init_ptr->end(), default_value);
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
         Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
             std::cout << "size: " << size << std::endl;
             gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
         }
 
         template<typename PtrTypeHost>
