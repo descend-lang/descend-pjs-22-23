@@ -5,7 +5,6 @@ use crate::ast as desc;
 use crate::ast::{utils};
 use crate::cpp_ast::Item;
 use crate::cu_codegen as cu;
-use crate::cu_codegen::{CodegenCtx, gen_ty};
 use crate::cpp_codegen as cpp;
 
 mod printer;
@@ -39,7 +38,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         .for_each(|descend_fun_dev| gen_and_add_fun_def(descend_fun_dev, &compil_unit.fun_defs, idx_checks, &mut cl_program_map));
 
     //TODO: Iterate over function definitions with template Parameters and duplicate them for each entry in Parameter Values
-
+    //TODO: Parameter von GPU Funktionen müssen in beiden Programmen vorkommen
     let mut cl_cpu_program:Vec<cl::Item> = vec![];
     let mut cl_gpu_program:Vec<cl::Item> = vec![];
 

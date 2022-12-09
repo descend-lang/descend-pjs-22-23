@@ -37,8 +37,9 @@ impl Item {
     }
 }
 
+//TODO: Make crate private again if possible
 #[derive(Clone, Debug)]
-pub(super) struct ParamDecl {
+pub struct ParamDecl {
     pub(super) name: String,
     pub(super) ty: Ty,
 }
@@ -174,15 +175,17 @@ pub(super) enum TemplateArg {
     Ty(Ty),
 }
 
+//TODO: Make crate private again if possible
 #[derive(Clone, Debug)]
-pub(super) enum GpuAddrSpace {
+pub enum GpuAddrSpace {
     Global,
     Local,
     Constant,
 }
 
+//TODO: Make crate private again if possible
 #[derive(Clone, Debug)]
-pub(super) enum Ty {
+pub enum Ty {
     Scalar(ScalarTy),
     // TODO: Refactor to cu only module?
     Atomic(ScalarTy),
@@ -208,16 +211,18 @@ pub(super) enum Ty {
 }
 
 // TODO this is not really a Cuda type and should maybe be represented by a generic type construct
+// TODO: Make crate private again if possible
 #[derive(Clone, Debug)]
-pub(super) enum BufferKind {
+pub enum BufferKind {
     CpuMem,
     GpuGlobal,
     //TODO: Do we need this
     Ident(String),
 }
 
+//TODO: Make crate private again if possible
 #[derive(Clone, Debug)]
-pub(super) enum ScalarTy {
+pub enum ScalarTy {
     Auto,
     Void,
     I32,
