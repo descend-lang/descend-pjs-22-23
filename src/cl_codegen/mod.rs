@@ -32,7 +32,8 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         .collect::<Vec<desc::FunDef>>();
 
     let mut cl_program_map:HashMap<String, cl::Item> = HashMap::new();
-    cl_program_map.insert("Header".to_string(), cl::Item::Include{name: "Header".to_string(), content: "descend.hpp".to_string()});
+    let include_header:Item = cl::Item::Include{name: "Header".to_string(), content: "descend.hpp".to_string()};
+    // cl_program_map.insert("Header".to_string(), cl::Item::Include{name: "Header".to_string(), content: "descend.hpp".to_string()});
 
     fun_defs_to_be_generated
         .iter()
@@ -56,7 +57,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         }
     });
 
-    printer::print(&cl_cpu_program, &cl_gpu_program)
+    printer::print(&include_header, &cl_cpu_program, &cl_gpu_program)
 }
 
 fn gen_and_add_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bool, item_map: &mut HashMap<String, cl::Item>) {

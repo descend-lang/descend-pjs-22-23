@@ -6,6 +6,7 @@
 #include <fstream>
 #include <sstream>
 #include <array>
+#include <string>
 
 const char *getErrorString(cl_int error);
 std::string load_program(const std::string &input);
