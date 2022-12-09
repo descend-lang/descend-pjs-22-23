@@ -84,98 +84,6 @@ namespace descend {
         return new Gpu (device, context, queue);
     };
 
-    template<typename DescendType>
-    class Buffer<Memory::GpuGlobal, DescendType> {
-        const Gpu *gpu_;
-
-    public:
-        cl::Buffer* buffer;
-        static constexpr std::size_t size = sizeof(DescendType);
-
-        Buffer(const Gpu* const __restrict__ gpu, const DescendType value) : gpu_{gpu} {
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *value);
-        }
-
-        Buffer(const Gpu* const __restrict__ gpu, const DescendType default_value) : gpu_{gpu} {
-            auto init_ptr = new descend::array<DescendType, n>();
-            std::fill(init_ptr->begin(), init_ptr->end(), default_value);
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
-        }
-
-        Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
-        }
-
-        Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
-        }
-
-        template<typename PtrTypeHost>
-        void read_to_host(PtrTypeHost * const __restrict__ host_ptr) const {
-            gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
-        }
-
-        //TODO: Why is this called too early?
-        ~Buffer() {
-            std:: cout << "Destroying Buffer of size " << size << std::endl;
-            //delete buffer;
-        }
-    };
-
-    template<typename DescendType, std::size_t n>
-    class Buffer<Memory::GpuGlobal, descend::array<DescendType, n>> {
-        const Gpu *gpu_;
-
-    public:
-        cl::Buffer* buffer;
-        static constexpr std::size_t size = n * sizeof(DescendType);
-
-        Buffer(const Gpu* const __restrict__ gpu, const DescendType default_value) : gpu_{gpu} {
-            auto init_ptr = new descend::array<DescendType, n>();
-            std::fill(init_ptr->begin(), init_ptr->end(), default_value);
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
-        }
-
-        Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
-        }
-
-        Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
-            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
-            // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
-        }
-
-        template<typename PtrTypeHost>
-        void read_to_host(PtrTypeHost * const __restrict__ host_ptr) const {
-            gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
-        }
-
-        //TODO: Why is this called too early?
-        ~Buffer() {
-            std:: cout << "Destroying Buffer of size " << size << std::endl;
-            //delete buffer;
-        }
-    };
 
     template<typename DescendType>
     class Buffer<Memory::CpuHeap, DescendType> {
@@ -235,6 +143,82 @@ namespace descend {
         const DescendType& operator[](std::size_t idx) const { return (*ptr_)[idx]; }
     };
 
+    template<typename DescendType>
+    class Buffer<Memory::GpuGlobal, DescendType> {
+        const Gpu *gpu_;
+
+    public:
+        cl::Buffer* buffer;
+        static constexpr std::size_t size = sizeof(DescendType);
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType value) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *value);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        template<typename PtrTypeHost>
+        void read_to_host(PtrTypeHost * const __restrict__ host_ptr) const {
+            gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
+        }
+
+        //TODO: Why is this called too early?
+        ~Buffer() {
+            std:: cout << "Destroying Buffer of size " << size << std::endl;
+            //delete buffer;
+        }
+    };
+
+    template<typename DescendType, std::size_t n>
+    class Buffer<Memory::GpuGlobal, descend::array<DescendType, n>> {
+        const Gpu *gpu_;
+
+    public:
+        cl::Buffer* buffer;
+        static constexpr std::size_t size = n * sizeof(DescendType);
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType default_value) : gpu_{gpu} {
+            auto init_ptr = new descend::array<DescendType, n>();
+            std::fill(init_ptr->begin(), init_ptr->end(), default_value);
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
+        }
+
+        template<typename PtrTypeHost>
+        void read_to_host(PtrTypeHost * const __restrict__ host_ptr) const {
+            gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
+        }
+
+        //TODO: Why is this called too early?
+        ~Buffer() {
+            std:: cout << "Destroying Buffer of size " << size << std::endl;
+            //delete buffer;
+        }
+    };
 
     template<typename DescendType>
     using HeapBuffer = Buffer<Memory::CpuHeap, DescendType>;
