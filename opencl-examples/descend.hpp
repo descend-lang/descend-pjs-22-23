@@ -1,7 +1,7 @@
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define BOOL_TRUE 1
 #define BOOL_FALSE 0
-
+#define CL_HPP_TARGET_OPENCL_VERSION 300
 #include <CL/opencl.hpp>
 #include <iostream>
 #include <cstdlib>
@@ -84,6 +84,56 @@ namespace descend {
         return new Gpu (device, context, queue);
     };
 
+    template<typename DescendType>
+    class Buffer<Memory::GpuGlobal, DescendType> {
+        const Gpu *gpu_;
+
+    public:
+        cl::Buffer* buffer;
+        static constexpr std::size_t size = sizeof(DescendType);
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType value) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *value);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType default_value) : gpu_{gpu} {
+            auto init_ptr = new descend::array<DescendType, n>();
+            std::fill(init_ptr->begin(), init_ptr->end(), default_value);
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
+        }
+
+        Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
+            buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
+            // Copy Data to device
+            std::cout << "size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
+        }
+
+        template<typename PtrTypeHost>
+        void read_to_host(PtrTypeHost * const __restrict__ host_ptr) const {
+            gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
+        }
+
+        //TODO: Why is this called too early?
+        ~Buffer() {
+            std:: cout << "Destroying Buffer of size " << size << std::endl;
+            //delete buffer;
+        }
+    };
+
     template<typename DescendType, std::size_t n>
     class Buffer<Memory::GpuGlobal, descend::array<DescendType, n>> {
         const Gpu *gpu_;
@@ -126,6 +176,65 @@ namespace descend {
             //delete buffer;
         }
     };
+
+    template<typename DescendType>
+    class Buffer<Memory::CpuHeap, DescendType> {
+        DescendType * const ptr_;
+
+    public:
+        static constexpr std::size_t size = sizeof(DescendType);
+
+        Buffer(const DescendType init_val) : ptr_{new DescendType(init_val)} {}
+        Buffer(const DescendType * const __restrict__ init_ptr) : ptr_{new DescendType(*init_ptr)} {}
+        ~Buffer() {
+            delete ptr_;
+        }
+
+        auto operator&() -> DescendType * {
+            return ptr_;
+        }
+
+        auto operator&() const -> const DescendType * {
+            return ptr_;
+        }
+    };
+
+
+    template<typename DescendType, std::size_t n>
+    class Buffer<Memory::CpuHeap, descend::array<DescendType, n>> {
+        descend::array<DescendType, n> * const ptr_;
+
+    public:
+        static constexpr std::size_t size = n * sizeof(DescendType);
+
+        Buffer(const DescendType default_value): ptr_{new descend::array<DescendType, n>} {
+            std::fill(ptr_->begin(), ptr_->end(), default_value);
+        }
+
+        Buffer(const descend::array<DescendType, n> init) : ptr_{new descend::array<DescendType, n>} {
+            std::copy(init.begin(), init.end(), ptr_->data());
+        }
+
+        Buffer(const DescendType * const __restrict__ init_ptr) : ptr_{new descend::array<DescendType, n>} {
+            std::copy(init_ptr, init_ptr + size, ptr_->data());
+        }
+
+        ~Buffer() {
+            delete ptr_;
+        }
+
+        auto operator&() -> DescendType * {
+            return ptr_->data();
+        }
+
+        auto operator&() const -> const DescendType * {
+            return ptr_->data();
+        }
+
+        DescendType& operator[](std::size_t idx) { return (*ptr_)[idx]; }
+        const DescendType& operator[](std::size_t idx) const { return (*ptr_)[idx]; }
+    };
+
 
     template<typename DescendType>
     using HeapBuffer = Buffer<Memory::CpuHeap, DescendType>;
