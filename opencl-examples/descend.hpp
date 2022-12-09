@@ -170,10 +170,9 @@ namespace descend {
             gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
         }
 
-        //TODO: Why is this called too early?
         ~Buffer() {
             std:: cout << "Destroying Buffer of size " << size << std::endl;
-            //delete buffer;
+            delete buffer;
         }
     };
 
@@ -205,7 +204,7 @@ namespace descend {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
             std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *init);
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init.data());
         }
 
         template<typename PtrTypeHost>
@@ -213,10 +212,9 @@ namespace descend {
             gpu_->queue->enqueueReadBuffer(*buffer, CL_TRUE, 0, size, host_ptr);
         }
 
-        //TODO: Why is this called too early?
         ~Buffer() {
             std:: cout << "Destroying Buffer of size " << size << std::endl;
-            //delete buffer;
+            delete buffer;
         }
     };
 
