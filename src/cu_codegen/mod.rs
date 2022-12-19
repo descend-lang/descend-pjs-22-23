@@ -1492,6 +1492,7 @@ fn gen_expr(
                     Some((reduced_fun, data_args)) => (reduced_fun, data_args, vec![]),
                     None => (*fun.clone(), args.clone(), kinded_args.clone()),
                 };
+
                 CheckedExpr::Expr(cu::Expr::FunCall {
                     fun: Box::new({
                         match gen_expr(&reduced_fun, codegen_ctx, comp_unit, dev_fun, idx_checks) {
