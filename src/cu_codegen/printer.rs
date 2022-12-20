@@ -4,6 +4,7 @@ use crate::cpp_ast::{
 use crate::cpp_ast::{GpuAddrSpace, Lit};
 use std::fmt::Formatter;
 use std::env;
+use crate::cpp_ast::ScalarTy::{Auto, Bool, F32, F64, Gpu, I32, Memory, SizeT, U32, Void};
 
 // function cuda_fmt takes Formatter and recursively formats
 // trait CudaFormat has function cuda_fmt so that cuda_fmt_vec can be implemented (alias for fmt_vec)
