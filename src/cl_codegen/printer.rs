@@ -99,17 +99,26 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name == "__kernel__" {
-                    s.push_str(format!("__kernel void {} (", name).as_str());
+                    // s.push_str(format!("__kernel void {} (", name).as_str());
+                    let res = write!(&mut s, "__kernel void {} (", name );
+                    if res.is_err() {
+                        panic!("{:?}", res);
+                    }
                 } else {
-                    s.push_str(format!("{} {} (",ret_ty.print_cl(is_gpu_function.clone()), name).as_str());
+                    // s.push_str(format!("{} {} (",ret_ty.print_cl(is_gpu_function.clone()), name).as_str());
+                    write!(&mut s, "{} {} (",ret_ty.print_cl(is_gpu_function.clone()), name);
                 }
                 if let Some(p) = fmt_vec(params, ", ", is_gpu_function.clone()) {
-                    s.push_str(p.as_str())
+                    // s.push_str(p.as_str())
+                    write!(&mut s, "{}", p);
                 }
-                s.push_str(") {\n");
+                // s.push_str(") {\n");
 
-                s.push_str(format!("{}", body.print_cl(is_gpu_function.clone())).as_str());
-                s.push_str("\n}\n");
+                // s.push_str(format!("{}", body.print_cl(is_gpu_function.clone())).as_str());
+                // s.push_str("\n}\n");
+                writeln!(&mut s, ") {{");
+                writeln!(&mut s, "{}", body.print_cl(is_gpu_function.clone()));
+                writeln!(&mut s, "}}");
                 s
             }
         }
@@ -130,26 +139,31 @@ impl OpenCLPrint for Stmt {
                 expr
             } => {
                 if let Some(addrs) = addr_space {
-                    // let res = write!(&mut s, "{} ", addrs.print_cl(is_gpu_function));
-                    s.push_str(format!("{} ", addrs.print_cl(is_gpu_function)).as_str())
+                    let res = write!(&mut s, "{} ", addrs.print_cl(is_gpu_function));
+                    // s.push_str(format!("{} ", addrs.print_cl(is_gpu_function)).as_str())
                 }
                 s.push_str(format!("{} {}", ty.print_cl(is_gpu_function), name).as_str());
                 if let Ty::CArray(_, n) = ty {
-                    s.push_str(format!("[{n}]").as_str());
+                    // s.push_str(format!("[{n}]").as_str());
+                    write!(&mut s, "[{n}]");
                 }
                 if let Some(expr) = expr {
-                    s.push_str(format!(" = {}", expr).as_str());
+                    // s.push_str(format!(" = {}", expr).as_str());
+                    write!(&mut s, " = {}", expr);
                 }
-                s.push_str(";");
+                // s.push_str(";");
+                write!(&mut s, ";");
                 s
             },
             Block(stmt) => format!("{{\n {} \n}}", stmt.print_cl(is_gpu_function)),
             Seq(stmt) => {
                 let (last, leading) = stmt.split_last().unwrap();
                 for stmt in leading {
-                    s.push_str(format!("{}", stmt.print_cl(is_gpu_function)).as_str());
+                    // s.push_str(format!("{}", stmt.print_cl(is_gpu_function)).as_str());
+                    write!(&mut s, "{}", stmt.print_cl(is_gpu_function));
                 }
-                s.push_str(format!("{}", last.print_cl(is_gpu_function)).as_str());
+                // s.push_str(format!("{}", last.print_cl(is_gpu_function)).as_str());
+                write!(&mut s, "{}", last.print_cl(is_gpu_function));
                 s
             },
             Expr(expr) => {
@@ -160,8 +174,10 @@ impl OpenCLPrint for Stmt {
                 }
             },
             If { cond, body } => {
-                s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
-                s.push_str(format!("{}", body.print_cl(is_gpu_function)).as_str());
+                // s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
+                writeln!(&mut s, "if ({})", cond.print_cl(is_gpu_function));
+                // s.push_str(format!("{}", body.print_cl(is_gpu_function)).as_str());
+                write!(&mut s, "{}", body.print_cl(is_gpu_function));
                 s
             },
             IfElse {
@@ -169,13 +185,20 @@ impl OpenCLPrint for Stmt {
                 true_body,
                 false_body,
             } => {
-                s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
-                s.push_str(
-                    format!(
-                        "{} else {}",
-                        true_body.print_cl(is_gpu_function),
-                        false_body.print_cl(is_gpu_function)
-                    ).as_str()
+                // s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
+                writeln!(&mut s, "if ({})", cond.print_cl(is_gpu_function));
+                // s.push_str(
+                //     format!(
+                //         "{} else {}",
+                //         true_body.print_cl(is_gpu_function),
+                //         false_body.print_cl(is_gpu_function)
+                //     ).as_str()
+                // );
+                write!(
+                    &mut s,
+                    "{} else {}",
+                    true_body.print_cl(is_gpu_function),
+                    false_body.print_cl(is_gpu_function)
                 );
                 s
             },
@@ -200,11 +223,14 @@ impl OpenCLPrint for Stmt {
             },
             Label(l) => format!("{}:", l),
             Return(expr) => {
-                s.push_str("return ");
+                // s.push_str("return ");
+                write!(&mut s, "return");
                 if let Some(e) = expr {
-                    s.push_str(format!(" {}", e.print_cl(is_gpu_function)).as_str());
+                    // s.push_str(format!(" {}", e.print_cl(is_gpu_function)).as_str());
+                    write!(&mut s, " {}", e.print_cl(is_gpu_function));
                 }
-                s.push_str(";");
+                // s.push_str(";");
+                writeln!(&mut s, ";");
                 s
             }
         }
@@ -232,15 +258,19 @@ impl OpenCLPrint for Expr {
                 template_args,
                 args,
             } => {
-                s.push_str(format!("{}", fun.print_cl(is_gpu_function)).as_str());
+                // s.push_str(format!("{}", fun.print_cl(is_gpu_function)).as_str());
+                write!(&mut s, "{}", fun.print_cl(is_gpu_function).as_str());
                 if !template_args.is_empty() {
                     panic!("There are no template args for functions in OpenCL")
                 }
-                s.push_str("(");
+                // s.push_str("(");
+                write!(&mut s, "(");
                 if let Some(a) = fmt_vec(args, ", ", is_gpu_function) {
-                    s.push_str(&a);
+                    // s.push_str(&a);
+                    write!(&mut s, "{a}");
                 }
                 s.push_str(")");
+                write!(&mut s, ")");
                 s
             },
             UnOp { op, arg } => format!("{}{}", op.print_cl(is_gpu_function), arg.print_cl(is_gpu_function)),
@@ -254,21 +284,27 @@ impl OpenCLPrint for Expr {
             ArraySubscript { array, index } => format!("{}[{}]", array.print_cl(is_gpu_function), index),
             Proj { tuple, n } => format!( "{}.{}", tuple.print_cl(is_gpu_function), n),
             InitializerList { elems } => {
-                s.push_str("{{");
+                // s.push_str("{{");
+                write!(&mut s, "{{");
                 if let Some(e) = fmt_vec(elems, ", ", is_gpu_function) {
-                    s.push_str(e.as_str());
+                    // s.push_str(e.as_str());
+                    write!(&mut s, "{e}");
                 }
-                s.push_str("}}");
+                // s.push_str("}}");
+                write!(&mut s, "}}");
                 s
             },
             Ref(expr) => format!("(&{})", expr.print_cl(is_gpu_function)),
             Deref(expr) => format!("(*{})", expr.print_cl(is_gpu_function)),
-            Tuple(elems) => {
-                s.push_str("descend::tuple{{");
+            Tuple(elems) => { // TODO! only on host code
+                // s.push_str("descend::tuple{{");
+                write!(&mut s, "descend::tuple{{");
                 if let Some(e) = fmt_vec(elems, ", ", is_gpu_function) {
-                    s.push_str(e.as_str());
+                    // s.push_str(e.as_str());
+                    write!(&mut s, "{e}");
                 }
-                s.push_str("}}");
+                // s.push_str("}}");
+                write!(&mut s, "}}");
                 s
             },
             Nat(n) => format!("{n}")
@@ -377,11 +413,14 @@ impl OpenCLPrint for Ty {
             CArray(ty, _) => format!("{}", ty.print_cl(is_gpu_function)),
             Tuple(tys) => {
                 let mut s = String::new();
-                s.push_str("descend::tuple<");
+                // s.push_str("descend::tuple<");
+                write!(&mut s, "descend::tuple<");
                 if let Some(t) = fmt_vec(tys, ", ", is_gpu_function) {
-                    s.push_str(t.as_str());
+                    // s.push_str(t.as_str());
+                    write!(&mut s, "{t}");
                 }
-                s.push_str(">");
+                // s.push_str(">");
+                write!(&mut s, ">");
                 s
             },
             Buffer(ty, buff_kind) => match buff_kind {
@@ -449,9 +488,11 @@ fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> 
     if let Some((last, leading)) = v.split_last() {
         let mut s = String::new();
         for p in leading {
-            s.push_str(format!("{}{}", p.print_cl(gpu_fun), sep).as_str());
+            // s.push_str(format!("{}{}", p.print_cl(gpu_fun), sep).as_str());
+            write!(&mut s, "{}{}", p.print_cl(gpu_fun), sep);
         }
-        s.push_str(format!("{}", last.print_cl(gpu_fun)).as_str());
+        // s.push_str(format!("{}", last.print_cl(gpu_fun)).as_str());
+        write!(&mut s, "{}", last.print_cl(gpu_fun));
         Some(s)
     } else {
         None
