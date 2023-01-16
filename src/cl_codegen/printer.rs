@@ -2,13 +2,11 @@
 
 
 use crate::cpp_ast::{
-    BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, TemplParam, TemplateArg, Ty, UnOp,
+    BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, Ty, UnOp,
 };
 use crate::cpp_ast::{GpuAddrSpace, Lit};
 use core::panic;
 use std::env;
-use std::fmt::format;
-use std::ops::Add;
 
 pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[Item]) -> String {
     use std::fmt::Write;
