@@ -380,19 +380,23 @@ fn fmt_vec<D: std::fmt::Display>(f: &mut Formatter<'_>, v: &[D], sep: &str) -> s
 fn test_print_program() -> std::fmt::Result {
     use Ty::*;
     let program = vec![
-        Item::Include("descend.cuh".to_string()),
+        Item::Include{
+            name: "header".to_string(),
+            content: "descend.cuh".to_string()
+        },
         Item::FunDef {
             name: "test_fun".to_string(),
             templ_params: vec![TemplParam::Value {
                 param_name: "n".to_string(),
                 ty: Scalar(ScalarTy::SizeT),
             }],
+            templ_values: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
                     ty: Const(Box::new(PtrConst(
                         Box::new(Scalar(ScalarTy::I32)),
-                        Some(GpuAddrSpace::Shared),
+                        Some(GpuAddrSpace::Local),
                     ))),
                 },
                 ParamDecl {
@@ -407,7 +411,7 @@ fn test_print_program() -> std::fmt::Result {
                 addr_space: None,
                 expr: Some(Expr::Ident("a".to_string())),
             },
-            is_dev_fun: true,
+            is_gpu_function: true,
         },
     ];
     let code = print(&program);

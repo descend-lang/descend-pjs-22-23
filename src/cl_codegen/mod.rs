@@ -35,11 +35,10 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         .collect::<Vec<_>>();
 
     let include = Item::Include { name: "include".to_string(), content: "descend.hpp".to_string() };
-    let cl_program = std::iter::once(include)
+    let cl_program = std::iter::empty()
         .chain(cl_fun_defs)
         .collect::<Vec<_>>();
-
-
+        
     //TODO: Iterate over function definitions with template Parameters and duplicate them for each entry in Parameter Values
     //TODO: Parameter von GPU Funktionen müssen in beiden Programmen vorkommen
     let mut cl_cpu_program:Vec<cl::Item> = vec![];
@@ -58,7 +57,7 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         }
     });
 
-    printer::print(&cl_cpu_program, &cl_gpu_program)
+    printer::print(&include, &cl_cpu_program, &cl_gpu_program)
 }
 
 fn collect_initial_fns_to_generate(comp_unit: &desc::CompilUnit) -> Vec<desc::FunDef> {
