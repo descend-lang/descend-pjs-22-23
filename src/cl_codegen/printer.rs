@@ -99,23 +99,17 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name == "__kernel__" {
-                    // s.push_str(format!("__kernel void {} (", name).as_str());
                     let res = write!(&mut s, "__kernel void {} (", name );
                     if res.is_err() {
                         panic!("{:?}", res);
                     }
                 } else {
-                    // s.push_str(format!("{} {} (",ret_ty.print_cl(is_gpu_function.clone()), name).as_str());
                     write!(&mut s, "{} {} (",ret_ty.print_cl(is_gpu_function.clone()), name);
                 }
                 if let Some(p) = fmt_vec(params, ", ", is_gpu_function.clone()) {
-                    // s.push_str(p.as_str())
                     write!(&mut s, "{}", p);
                 }
-                // s.push_str(") {\n");
 
-                // s.push_str(format!("{}", body.print_cl(is_gpu_function.clone())).as_str());
-                // s.push_str("\n}\n");
                 writeln!(&mut s, ") {{");
                 writeln!(&mut s, "{}", body.print_cl(is_gpu_function.clone()));
                 writeln!(&mut s, "}}");
@@ -140,18 +134,14 @@ impl OpenCLPrint for Stmt {
             } => {
                 if let Some(addrs) = addr_space {
                     let res = write!(&mut s, "{} ", addrs.print_cl(is_gpu_function));
-                    // s.push_str(format!("{} ", addrs.print_cl(is_gpu_function)).as_str())
                 }
                 s.push_str(format!("{} {}", ty.print_cl(is_gpu_function), name).as_str());
                 if let Ty::CArray(_, n) = ty {
-                    // s.push_str(format!("[{n}]").as_str());
                     write!(&mut s, "[{n}]");
                 }
                 if let Some(expr) = expr {
-                    // s.push_str(format!(" = {}", expr).as_str());
                     write!(&mut s, " = {}", expr);
                 }
-                // s.push_str(";");
                 write!(&mut s, ";");
                 s
             },
@@ -159,10 +149,8 @@ impl OpenCLPrint for Stmt {
             Seq(stmt) => {
                 let (last, leading) = stmt.split_last().unwrap();
                 for stmt in leading {
-                    // s.push_str(format!("{}", stmt.print_cl(is_gpu_function)).as_str());
                     write!(&mut s, "{}", stmt.print_cl(is_gpu_function));
                 }
-                // s.push_str(format!("{}", last.print_cl(is_gpu_function)).as_str());
                 write!(&mut s, "{}", last.print_cl(is_gpu_function));
                 s
             },
@@ -174,9 +162,7 @@ impl OpenCLPrint for Stmt {
                 }
             },
             If { cond, body } => {
-                // s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
                 writeln!(&mut s, "if ({})", cond.print_cl(is_gpu_function));
-                // s.push_str(format!("{}", body.print_cl(is_gpu_function)).as_str());
                 write!(&mut s, "{}", body.print_cl(is_gpu_function));
                 s
             },
@@ -187,13 +173,6 @@ impl OpenCLPrint for Stmt {
             } => {
                 // s.push_str(format!("if ({})", cond.print_cl(is_gpu_function)).as_str());
                 writeln!(&mut s, "if ({})", cond.print_cl(is_gpu_function));
-                // s.push_str(
-                //     format!(
-                //         "{} else {}",
-                //         true_body.print_cl(is_gpu_function),
-                //         false_body.print_cl(is_gpu_function)
-                //     ).as_str()
-                // );
                 write!(
                     &mut s,
                     "{} else {}",
@@ -223,13 +202,10 @@ impl OpenCLPrint for Stmt {
             },
             Label(l) => format!("{}:", l),
             Return(expr) => {
-                // s.push_str("return ");
                 write!(&mut s, "return");
                 if let Some(e) = expr {
-                    // s.push_str(format!(" {}", e.print_cl(is_gpu_function)).as_str());
                     write!(&mut s, " {}", e.print_cl(is_gpu_function));
                 }
-                // s.push_str(";");
                 writeln!(&mut s, ";");
                 s
             }
@@ -242,6 +218,7 @@ impl OpenCLPrint for Stmt {
 impl OpenCLPrint for Expr {
     fn print_cl(&self, is_gpu_function: bool) -> String {
         use Expr::*;
+        use std::fmt::Write;
         let mut s = String::new();
 
         match  self {
@@ -258,15 +235,12 @@ impl OpenCLPrint for Expr {
                 template_args,
                 args,
             } => {
-                // s.push_str(format!("{}", fun.print_cl(is_gpu_function)).as_str());
                 write!(&mut s, "{}", fun.print_cl(is_gpu_function).as_str());
                 if !template_args.is_empty() {
                     panic!("There are no template args for functions in OpenCL")
                 }
-                // s.push_str("(");
                 write!(&mut s, "(");
                 if let Some(a) = fmt_vec(args, ", ", is_gpu_function) {
-                    // s.push_str(&a);
                     write!(&mut s, "{a}");
                 }
                 s.push_str(")");
@@ -284,26 +258,20 @@ impl OpenCLPrint for Expr {
             ArraySubscript { array, index } => format!("{}[{}]", array.print_cl(is_gpu_function), index),
             Proj { tuple, n } => format!( "{}.{}", tuple.print_cl(is_gpu_function), n),
             InitializerList { elems } => {
-                // s.push_str("{{");
                 write!(&mut s, "{{");
                 if let Some(e) = fmt_vec(elems, ", ", is_gpu_function) {
-                    // s.push_str(e.as_str());
                     write!(&mut s, "{e}");
                 }
-                // s.push_str("}}");
                 write!(&mut s, "}}");
                 s
             },
             Ref(expr) => format!("(&{})", expr.print_cl(is_gpu_function)),
             Deref(expr) => format!("(*{})", expr.print_cl(is_gpu_function)),
             Tuple(elems) => { // TODO! only on host code
-                // s.push_str("descend::tuple{{");
                 write!(&mut s, "descend::tuple{{");
                 if let Some(e) = fmt_vec(elems, ", ", is_gpu_function) {
-                    // s.push_str(e.as_str());
                     write!(&mut s, "{e}");
                 }
-                // s.push_str("}}");
                 write!(&mut s, "}}");
                 s
             },
@@ -318,8 +286,12 @@ impl OpenCLPrint for Lit {
 
         match self {
             Bool(val) => {
-                let v = if *val {"1"} else {"0"};
-                format!("{v}")
+                if is_gpu_function {
+                    let v = if *val {"1"} else {"0"};
+                    format!("{v}")
+                } else {
+                    format!("{val}")
+                }
             }// format!("{}", val), // TODO? print 0 or 1 on GPU depending on value?
             I32(val) => format!("{}", val),
             U32(val) => format!("{}", val),
@@ -395,6 +367,7 @@ impl OpenCLPrint for GpuAddrSpace {
 impl OpenCLPrint for Ty {
     fn print_cl(&self, is_gpu_function: bool) -> String {
         use Ty::*;
+        use std::fmt::Write;
         match self {
             Ptr(ty, Some(addr_space)) => format!(
                 "{}, {} *",
@@ -413,13 +386,10 @@ impl OpenCLPrint for Ty {
             CArray(ty, _) => format!("{}", ty.print_cl(is_gpu_function)),
             Tuple(tys) => {
                 let mut s = String::new();
-                // s.push_str("descend::tuple<");
                 write!(&mut s, "descend::tuple<");
                 if let Some(t) = fmt_vec(tys, ", ", is_gpu_function) {
-                    // s.push_str(t.as_str());
                     write!(&mut s, "{t}");
                 }
-                // s.push_str(">");
                 write!(&mut s, ">");
                 s
             },
@@ -485,13 +455,12 @@ impl OpenCLPrint for ScalarTy {
 }
 
 fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> {
+    use std::fmt::Write;
     if let Some((last, leading)) = v.split_last() {
         let mut s = String::new();
         for p in leading {
-            // s.push_str(format!("{}{}", p.print_cl(gpu_fun), sep).as_str());
             write!(&mut s, "{}{}", p.print_cl(gpu_fun), sep);
         }
-        // s.push_str(format!("{}", last.print_cl(gpu_fun)).as_str());
         write!(&mut s, "{}", last.print_cl(gpu_fun));
         Some(s)
     } else {
@@ -523,7 +492,7 @@ fn test_print_program() -> std::fmt::Result {
                 },
                 ParamDecl {
                     name: "b".to_string(),
-                    ty: Ptr(Box::new(Scalar(ScalarTy::I32)), None),
+                    ty: Ptr(Box::new(Scalar(ScalarTy::Bool)), None),
                 },
             ],
             ret_ty: Scalar(ScalarTy::Void),
@@ -596,4 +565,3 @@ fn test_print_program() -> std::fmt::Result {
     print!("{}", code);
     Ok(())
 }
-
