@@ -14,13 +14,9 @@ fn scan() -> Res {
 
 #[test]
 fn reduce_shared_mem() -> Res {
-    println!(
-        "{}",
-        descend::cl_compile("examples/with_tys/reduce_shared_mem.desc")?
-    );
     Ok(println!(
         "{}",
-        descend::cu_compile("examples/with_tys/reduce_shared_mem.desc")?
+        descend::cl_compile("examples/with_tys/reduce_shared_mem.desc")?
     ))
 }
 

@@ -1,5 +1,6 @@
 mod printer;
 
+use std::borrow::BorrowMut;
 use crate::{ast, cpp_ast as cu};
 use crate::ast as desc;
 use crate::ast::visit::Visit;
@@ -8,7 +9,7 @@ use crate::ast::{utils, Mutability};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
-use crate::cpp_ast::{Item, TemplateArg};
+use crate::cpp_ast::{Item, ParamDecl, TemplateArg, TemplParam};
 use crate::cpp_codegen as cpp;
 use crate::cpp_codegen::codegenCtx::{CodegenCtx, CheckedExpr, ShapeExpr, ParallelityCollec, ViewOrExpr, ParallCtx, ShapeCtx};
 use crate::cpp_codegen::codegenCtx;
@@ -17,6 +18,10 @@ use crate::parser::descend::compil_unit;
 // Precondition. all function definitions are successfully typechecked and
 // therefore every subexpression stores a type
 pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
+    let mut codegen_ctx = CodegenCtx::new();
+    codegen_ctx.push_scope();
+
+
     let fun_defs_to_be_generated = compil_unit
         .fun_defs
         .iter()
@@ -38,13 +43,14 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         .chain(
             fun_defs_to_be_generated
                 .iter()
-                .map(|fun_def| gen_fun_def(fun_def, &compil_unit.fun_defs, idx_checks)),
+                .map(|fun_def| gen_fun_def(fun_def, &compil_unit.fun_defs, idx_checks, &mut codegen_ctx)),
         )
         .collect::<cu::Program>();
+    codegen_ctx.drop_scope();
     printer::print(&cu_program)
 }
 
-fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bool) -> cu::Item {
+fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bool, codegen_ctx: &mut CodegenCtx) -> cu::Item {
     let desc::FunDef {
         name,
         generic_params: ty_idents,
@@ -69,7 +75,7 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
                     ..
                 }
             ),
-            &mut CodegenCtx::new(),
+            codegen_ctx,
             comp_unit,
             false,
             idx_checks,
@@ -2296,7 +2302,9 @@ fn gen_global_fn_call(
     codegen_ctx.drop_scope();
 
     let views = view_exprs_in_args(args, codegen_ctx);
-    if let Some(mangled) = mangle_name(&fun.name, &views, &cu_gen_args) {
+    let mangled = mangle_name(&fun.name, &views, &cu_gen_args);
+
+    if !cu_gen_args.is_empty() || mangled != fun.name {
         if !codegen_ctx.inst_fn_ctx.contains_key(&mangled) {
             codegen_ctx.push_scope();
             bind_view_args_to_params(&fun.param_decls, args, codegen_ctx);
@@ -2305,25 +2313,37 @@ fn gen_global_fn_call(
                 .exec_mapping
                 .insert(&fun.exec_decl.ident.name, codegen_ctx.exec.clone());*/
 
-            let mut new_fun_def = gen_fun_def(fun, comp_unit, idx_checks);
+            let mut new_fun_def = gen_fun_def(fun, comp_unit, idx_checks, codegen_ctx);
 
-            match new_fun_def {
-                Item::FunDef{ref mut name, ref mut templ_params, ..} 
-                => {
-                    *name = mangled.clone();
-                    *templ_params = vec![];
-                }
-                _ => {panic!("Cannot have Include here!")}
-            }
+            new_fun_def = monomorphize_fun_def_nats(new_fun_def, mangled.clone());
 
 
             codegen_ctx.drop_scope();
             codegen_ctx.inst_fn_ctx.insert(mangled.clone(), new_fun_def);
         }
+        // Template Params beim Aufruf hinzufügen
         create_named_fn_call(mangled, cu_gen_args, cu_args)
     } else {
+        // Hier brauchen wir keine Template Args
         create_named_fn_call(fun.name.to_string(), cu_gen_args, cu_args)
     }
+}
+
+fn monomorphize_fun_def_nats(mut item: Item, mangeled_name: String) -> Item {
+    if let Item::FunDef { ref mut name, ref mut templ_params, ref mut params, .. } = item {
+        *name = mangeled_name;
+        *templ_params = templ_params.into_iter().filter_map(|templ| {
+            if let TemplParam::Value { param_name, ty } = templ {
+                params.push(ParamDecl { name: param_name.to_string(), ty: ty.to_owned() });
+                None
+            } else {
+                //TODO: Was machen mit den Types?
+                Some(templ.clone())
+            }
+        }).collect();
+    }
+
+    item
 }
 
 fn gen_fn_call_args(args: &[desc::Expr], codegen_ctx: &mut CodegenCtx, comp_unit: &[desc::FunDef], dev_fun: bool, idx_checks: bool) -> Vec<cu::Expr> {
@@ -2384,18 +2404,14 @@ fn view_exprs_in_args(args: &[desc::Expr], codegen_ctx: &CodegenCtx) -> Vec<Shap
         .collect()
 }
 
-fn mangle_name(name: &str, views: &[ShapeExpr], template_args: &[TemplateArg]) -> Option<String> {
+fn mangle_name(name: &str, views: &[ShapeExpr], template_args: &[TemplateArg]) -> String {
     let mut mangled = name.to_string();
     // Todo: Do we nood stringify_exec?
     // mangled.push_str(&stringify_exec(exec));
     mangled.push_str(&stringify_template_args(template_args));
     mangled.push_str(&stringify_views(views));
 
-    if mangled != name {
-        Some(mangled)
-    } else {
-        None
-    }
+    mangled
 }
 
 fn stringify_template_args(args: &[TemplateArg]) -> String {
@@ -2406,15 +2422,17 @@ fn stringify_template_args(args: &[TemplateArg]) -> String {
     str
 }
 
-// TODO: Implement
 fn stringify_template_arg(arg: &TemplateArg) -> String {
     match arg {
         TemplateArg::Expr(expr) => {
-            "_100".to_string()
-        },
-        TemplateArg::Ty(ty) => {"_type".to_string()}
+            match expr {
+                // For NAT Template Args we create them as normal Args later!
+                cu::Expr::Nat(_) => { "".to_string() }
+                _ => panic!("Template Args should only be NATs or Types!")
+            }
+        }
+        TemplateArg::Ty(ty) => { todo!("Implement Name mangling for Types!") }
     }
-
 }
 
 fn stringify_views(views: &[ShapeExpr]) -> String {
@@ -2491,9 +2509,23 @@ fn separate_view_params_with_args_from_rest<'a>(
 
 fn create_named_fn_call(
     name: String,
-    gen_args: Vec<cu::TemplateArg>,
-    args: Vec<cu::Expr>,
+    mut gen_args: Vec<cu::TemplateArg>,
+    mut args: Vec<cu::Expr>,
 ) -> cu::Expr {
+    gen_args = gen_args.into_iter().filter_map(|gen_arg| {
+        if let TemplateArg::Expr(expr) = gen_arg {
+            // TODO: Are there other types than NAT that could be template args?
+            if let cu::Expr::Nat(nat) = expr {
+                args.push(cu::Expr::Nat(nat));
+                None
+            } else {
+                panic!("Template Type is not NAT!")
+            }
+        } else {
+            Some(gen_arg)
+        }
+    }).collect();
+
     create_fn_call(cu::Expr::Ident(name), gen_args, args)
 }
 

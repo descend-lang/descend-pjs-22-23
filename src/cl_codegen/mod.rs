@@ -113,7 +113,7 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
                     ..
                 }
             ),
-            &mut CodegenCtx::new(),
+            codegen_ctx,
             comp_unit,
             false,
             idx_checks,
