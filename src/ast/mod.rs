@@ -41,6 +41,7 @@ pub struct FunDef {
     pub body_expr: Expr,
 }
 
+
 impl FunDef {
     pub fn ty(&self) -> Ty {
         let param_tys: Vec<_> = self

@@ -409,7 +409,11 @@ fn test_print_program() -> std::fmt::Result {
                 name: "a_f".to_string(),
                 ty: Ty::Scalar(ScalarTy::Auto),
                 addr_space: None,
-                expr: Some(Expr::Ident("a".to_string())),
+                expr: Some(Expr::BinOp {
+                    op: BinOp::Add,
+                    lhs: Box::new(Expr::Ident("a".to_string())),
+                    rhs: Box::new(Expr::Lit(Lit::I32(10))),
+                }),
             },
             is_gpu_function: true,
         },

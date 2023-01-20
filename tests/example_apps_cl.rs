@@ -8,15 +8,19 @@ type Res = Result<(), descend::error::ErrorReported>;
 fn scan() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/scan.desc")?
+        descend::cl_compile("examples/with_tys/scan.desc")?
     ))
 }
 
 #[test]
 fn reduce_shared_mem() -> Res {
+    println!(
+        "{}",
+        descend::cl_compile("examples/with_tys/reduce_shared_mem.desc")?
+    );
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/reduce_shared_mem.desc")?
+        descend::cu_compile("examples/with_tys/reduce_shared_mem.desc")?
     ))
 }
 
@@ -24,7 +28,7 @@ fn reduce_shared_mem() -> Res {
 fn tree_reduce() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/tree_reduce.desc")?
+        descend::cl_compile("examples/with_tys/tree_reduce.desc")?
     ))
 }
 
@@ -32,7 +36,7 @@ fn tree_reduce() -> Res {
 fn vector_add() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/vec_add.desc")?
+        descend::cl_compile("examples/with_tys/vec_add.desc")?
     ))
 }
 
@@ -41,7 +45,7 @@ fn vector_add() -> Res {
 fn warp_reduce() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/warp_reduce.desc")?
+        descend::cl_compile("examples/with_tys/warp_reduce.desc")?
     ))
 }
 
@@ -50,7 +54,7 @@ fn warp_reduce() -> Res {
 fn bfs() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/bfs.desc")?
+        descend::cl_compile("examples/with_tys/bfs.desc")?
     ))
 }
 
@@ -58,6 +62,6 @@ fn bfs() -> Res {
 fn computed_indexing() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/with_tys/computed_indexing.desc")?
+        descend::cl_compile("examples/with_tys/computed_indexing.desc")?
     ))
 }

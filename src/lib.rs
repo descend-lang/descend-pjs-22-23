@@ -1,3 +1,5 @@
+extern crate core;
+
 use crate::error::ErrorReported;
 
 #[macro_use]
@@ -12,9 +14,16 @@ mod ty_check;
 mod cpp_ast;
 mod cpp_codegen;
 
-pub fn compile(file_path: &str) -> Result<String, ErrorReported> {
+pub fn cu_compile(file_path: &str) -> Result<String, ErrorReported> {
     let source = parser::SourceCode::from_file(file_path)?;
     let mut compil_unit = parser::parse(&source)?;
     ty_check::ty_check(&mut compil_unit)?;
     Ok(cu_codegen::gen(&compil_unit, false))
+}
+
+pub fn cl_compile(file_path: &str) -> Result<String, ErrorReported> {
+    let source = parser::SourceCode::from_file(file_path)?;
+    let mut compil_unit = parser::parse(&source)?;
+    ty_check::ty_check(&mut compil_unit)?;
+    Ok(cl_codegen::gen(&compil_unit, false))
 }

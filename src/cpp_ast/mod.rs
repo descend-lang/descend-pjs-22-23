@@ -1,11 +1,11 @@
 use crate::ast::Nat;
 use std::collections::HashMap;
 
-pub(super) type Program = Vec<Item>;
+pub type Program = Vec<Item>;
 
 // TODO big difference in sizes beteween variants
 #[derive(Clone, Debug)]
-pub(super) enum Item {
+pub enum Item {
     Include{
         name: String,
         content: String,
@@ -46,7 +46,7 @@ pub struct ParamDecl {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Stmt {
+pub enum Stmt {
     Skip,
     VarDecl {
         name: String,
@@ -81,7 +81,7 @@ pub(super) enum Stmt {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Expr {
+pub enum Expr {
     // TODO Is there a better way to represent Unit values in C++?
     Empty,
     Ident(String),
@@ -133,7 +133,7 @@ pub(super) enum Expr {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Lit {
+pub enum Lit {
     Bool(bool),
     I32(i32),
     U32(u32),
@@ -142,13 +142,13 @@ pub(super) enum Lit {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum UnOp {
+pub enum UnOp {
     Not,
     Neg,
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum BinOp {
+pub enum BinOp {
     Add,
     Sub,
     Mul,
@@ -165,13 +165,13 @@ pub(super) enum BinOp {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum TemplParam {
+pub enum TemplParam {
     Value { param_name: String, ty: Ty },
     TyName { name: String },
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum TemplateArg {
+pub enum TemplateArg {
     Expr(Expr),
     Ty(Ty),
 }

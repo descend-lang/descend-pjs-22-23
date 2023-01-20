@@ -8,7 +8,7 @@ type Res = Result<(), descend::error::ErrorReported>;
 fn scale_vec() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/scale_vec.desc")?
+        descend::cu_compile("examples/infer/scale_vec.desc")?
     ))
 }
 
@@ -16,7 +16,7 @@ fn scale_vec() -> Res {
 fn bitonic_sort_split_blocks() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/bitonic_sort/bitonic_sort.desc")?
+        descend::cu_compile("examples/infer/bitonic_sort/bitonic_sort.desc")?
     ))
 }
 
@@ -24,7 +24,7 @@ fn bitonic_sort_split_blocks() -> Res {
 fn bitonic_sort_shrd_mem() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/bitonic_sort/bitonic_sort_shrd_mem.desc")?
+        descend::cu_compile("examples/infer/bitonic_sort/bitonic_sort_shrd_mem.desc")?
     ))
 }
 
@@ -37,7 +37,7 @@ fn scan() -> Res {
     );
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/scan.desc")?
+        descend::cu_compile("examples/infer/scan.desc")?
     ))
 }
 
@@ -45,7 +45,7 @@ fn scan() -> Res {
 fn reduce_shared_mem() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/reduce_shared_mem.desc")?
+        descend::cu_compile("examples/infer/reduce_shared_mem.desc")?
     ))
 }
 
@@ -53,7 +53,7 @@ fn reduce_shared_mem() -> Res {
 fn tree_reduce() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/tree_reduce.desc")?
+        descend::cu_compile("examples/infer/tree_reduce.desc")?
     ))
 }
 
@@ -61,7 +61,7 @@ fn tree_reduce() -> Res {
 fn vector_add() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/vec_add.desc")?
+        descend::cu_compile("examples/infer/vec_add.desc")?
     ))
 }
 
@@ -70,20 +70,20 @@ fn vector_add() -> Res {
 fn warp_reduce() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/warp_reduce.desc")?
+        descend::cu_compile("examples/infer/warp_reduce.desc")?
     ))
 }
 
 #[ignore]
 #[test]
 fn bfs() -> Res {
-    Ok(println!("{}", descend::compile("examples/infer/bfs.desc")?))
+    Ok(println!("{}", descend::cu_compile("examples/infer/bfs.desc")?))
 }
 
 #[test]
 fn computed_indexing() -> Res {
     Ok(println!(
         "{}",
-        descend::compile("examples/infer/computed_indexing.desc")?
+        descend::cu_compile("examples/infer/computed_indexing.desc")?
     ))
 }
