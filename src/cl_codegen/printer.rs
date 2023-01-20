@@ -81,7 +81,7 @@ trait OpenCLPrint {
 impl OpenCLPrint for Item {
     fn print_cl(&self, gpu_fun: bool) -> String {
         match self {
-            Item::Include { content, .. } => format!("#include {content}\n"),
+            Item::Include { content, .. } => format!("#include \"{content}\"\n"),
             Item::FunDef {
                 name,
                 templ_params,
