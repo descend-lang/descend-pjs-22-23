@@ -5,7 +5,7 @@ use crate::{ast, cpp_ast as cu};
 use crate::ast as desc;
 use crate::ast::visit::Visit;
 use crate::ast::visit_mut::VisitMut;
-use crate::ast::{utils, Mutability};
+use crate::ast::{utils, Mutability, Ty};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
@@ -2315,8 +2315,15 @@ fn gen_global_fn_call(
 
             let mut new_fun_def = gen_fun_def(fun, comp_unit, idx_checks, codegen_ctx);
 
-            new_fun_def = monomorphize_fun_def_nats(new_fun_def, mangled.clone());
 
+            new_fun_def = monomorphize_fun_def_name(new_fun_def, mangled.clone());
+            new_fun_def = monomorphize_fun_def_nats(new_fun_def, mangled.clone());
+            new_fun_def = monomorphize_fun_def_types(new_fun_def, &cu_gen_args);
+
+            if let Item::FunDef {ref mut templ_params, ..} = new_fun_def {
+                templ_params.clear();
+            }
+            // Clear Template Params!
 
             codegen_ctx.drop_scope();
             codegen_ctx.inst_fn_ctx.insert(mangled.clone(), new_fun_def);
@@ -2329,18 +2336,57 @@ fn gen_global_fn_call(
     }
 }
 
-fn monomorphize_fun_def_nats(mut item: Item, mangeled_name: String) -> Item {
-    if let Item::FunDef { ref mut name, ref mut templ_params, ref mut params, .. } = item {
+fn monomorphize_fun_def_name(mut item: Item, mangeled_name: String) -> Item {
+    if let Item::FunDef { ref mut name, .. } = item {
         *name = mangeled_name;
-        *templ_params = templ_params.into_iter().filter_map(|templ| {
+    }
+    item
+}
+
+fn monomorphize_fun_def_types(mut item: Item, template_args: &Vec<TemplateArg>) -> Item {
+    if let Item::FunDef { ref mut templ_params, ref mut body, ref mut ret_ty, ref mut params, .. } = item {
+        if templ_params.len() != template_args.len() {
+            panic!("Different Size of Template Params and Template Args");
+        }
+        for i in 0..templ_params.len() {
+            if let TemplParam::TyName { name: template_param_name } = &templ_params[i] {
+                if let TemplateArg::Ty(ty) = &template_args[i] {
+                    monomorphize_return_type(ret_ty, template_param_name, ty);
+                    monomorphize_param_types(params, template_param_name, ty);
+                }
+            }
+        }
+    }
+    // TODO: Add as first STMT of Body
+    item
+}
+
+fn monomorphize_param_types(params: &mut [ParamDecl], templ_param_name: &str, template_arg: &cu::Ty) {
+    params.iter_mut().for_each(|param| {
+        if let cu::Ty::Ident(param_name_identifier) = & param.ty{
+            if param_name_identifier == templ_param_name {
+                param.ty = template_arg.clone();
+            }
+        }
+    });
+}
+
+fn monomorphize_return_type(return_type: &mut cu::Ty, templ_param_name: &str, template_arg: &cu::Ty) {
+    if let cu::Ty::Ident(ref return_type_ident) = return_type {
+        if return_type_ident == templ_param_name {
+            *return_type = template_arg.clone();
+        }
+    }
+}
+
+// Moves NAT Template Params to the Param-List, keeps Type Template Params
+fn monomorphize_fun_def_nats(mut item: Item, mangeled_name: String) -> Item {
+    if let Item::FunDef { ref templ_params, ref mut params, .. } = item {
+        templ_params.into_iter().for_each(|templ| {
             if let TemplParam::Value { param_name, ty } = templ {
                 params.push(ParamDecl { name: param_name.to_string(), ty: ty.to_owned() });
-                None
-            } else {
-                //TODO: Was machen mit den Types?
-                Some(templ.clone())
             }
-        }).collect();
+        });
     }
 
     item

@@ -1,0 +1,12 @@
+fn no_templ_params() -[cpu.thread]-> () <'a, 'b> {
+    let x = 30;
+
+    let y = test::<i32>(x);
+
+    ()
+}
+
+fn test<T: ty>(x: T) -[cpu.thread]-> T {
+    let y: T = x;
+    y
+}
