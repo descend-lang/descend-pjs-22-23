@@ -2308,7 +2308,11 @@ fn gen_global_fn_call(
             let mut new_fun_def = gen_fun_def(fun, comp_unit, idx_checks);
 
             match new_fun_def {
-                Item::FunDef{ref mut name, ..} => {*name = mangled.clone();}
+                Item::FunDef{ref mut name, ref mut templ_params, ..} 
+                => {
+                    *name = mangled.clone();
+                    *templ_params = vec![];
+                }
                 _ => {panic!("Cannot have Include here!")}
             }
 

@@ -235,7 +235,7 @@ impl OpenCLPrint for Expr {
             } => {
                 write!(&mut s, "{}", fun.print_cl(is_gpu_function).as_str());
                 if !template_args.is_empty() {
-                    //panic!("There are no template args for functions in OpenCL")
+                    panic!("There are no template args for functions in OpenCL")
                 }
                 write!(&mut s, "(");
                 if let Some(a) = fmt_vec(args, ", ", is_gpu_function) {
