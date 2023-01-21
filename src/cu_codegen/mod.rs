@@ -9,7 +9,8 @@ use crate::ast::{utils, Mutability, Ty};
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
-use crate::cpp_ast::{Item, ParamDecl, TemplateArg, TemplParam};
+use std::vec;
+use crate::cpp_ast::{Item, ParamDecl, Stmt, TemplateArg, TemplParam};
 use crate::cpp_codegen as cpp;
 use crate::cpp_codegen::codegenCtx::{CodegenCtx, CheckedExpr, ShapeExpr, ParallelityCollec, ViewOrExpr, ParallCtx, ShapeCtx};
 use crate::cpp_codegen::codegenCtx;
@@ -694,6 +695,8 @@ fn gen_exec(
     // Prepare parameter declarations for inputs
     let mut cu_input_expr = ShapeExpr::create_from(input_expr, &codegen_ctx.shape_ctx);
     let name_to_exprs = cu_input_expr.collect_and_rename_input_exprs();
+
+
     let mut param_decls: Vec<_> = name_to_exprs
         .iter()
         .map(|(name, expr)| cu::ParamDecl {
@@ -724,7 +727,7 @@ fn gen_exec(
     };
 
     // FIXME only allows Lambdas
-    let (dev_fun, free_kinded_idents): (cu::Expr, Vec<desc::IdentKinded>) =
+    let free_kinded_idents: Vec<desc::IdentKinded> =
         if let desc::ExprKind::Lambda(params, _, _, body) = &fun.expr {
             let parall_collec = params[0].ident.clone();
             let mut fresh_parall_codegen_ctx = CodegenCtx {
@@ -798,29 +801,19 @@ fn gen_exec(
             //         }
             //     })
             //     .collect::<Vec<_>>();
-            let mut all_param_decls = param_decls;
+
+            //TODO: Refactor me!
+            codegen_ctx.inst_fn_ctx.insert("kernel".to_string(), gen_kernel_function(param_decls, gpu_fun_body));
+
+            vec![]
             // FIXME see above
-            // all_param_decls.extend(nat_param_decls);
-            (
-                cu::Expr::Lambda {
-                    captures: vec![],
-                    params: all_param_decls,
-                    body: Box::new(if idx_checks {
-                        global_failure_init.push(gpu_fun_body);
-                        cu::Stmt::Seq(global_failure_init)
-                    } else {
-                        gpu_fun_body
-                    }),
-                    ret_ty: cu::Ty::Scalar(cu::ScalarTy::Void),
-                    is_dev_fun: true,
-                },
-                vec![]
-                // FIXME see above
-                // free_kinded_idents,
-            )
+            // free_kinded_idents,
+
         } else {
             panic!("Currently only lambdas can be passed.")
         };
+
+
     let mut checks: Vec<cu::Stmt> = vec![];
     let mut input: Vec<_> = name_to_exprs
         .iter()
@@ -836,7 +829,10 @@ fn gen_exec(
         )
         .collect();
     let template_args = gen_args_kinded(vec![blocks.clone(), threads.clone()].as_slice());
-    let mut args: Vec<cu::Expr> = vec![gpu, dev_fun];
+    let mut args: Vec<cu::Expr> = vec![gpu];
+    let mut kernel_id_expr = vec![cu::Expr::Ident("kernel".to_string())];
+    args.append(&mut kernel_id_expr);
+
     args.append(&mut input);
     let mut nat_input_idents = free_kinded_idents
         .iter()
@@ -865,6 +861,19 @@ fn gen_exec(
                 args,
             },
         )
+    }
+}
+
+fn gen_kernel_function(param_decls: Vec<ParamDecl>, body: Stmt) -> cu::Item{
+    cu::Item::FunDef {
+        name: "__kernel".to_string(),
+        templ_params: vec![],
+        templ_values: vec![],
+        params: param_decls,
+        ret_ty: cu::Ty::Scalar(cu::ScalarTy::Void),
+        //TODO: IDX Checks
+        body: body,
+        is_gpu_function: true,
     }
 }
 

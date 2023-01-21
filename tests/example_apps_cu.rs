@@ -7,7 +7,7 @@ type Res = Result<(), descend::error::ErrorReported>;
 #[test]
 fn scan() -> Res {
     Ok(println!(
-        "{}",cl
+        "{}",
         descend::cu_compile("examples/with_tys/scan.desc")?
     ))
 }
