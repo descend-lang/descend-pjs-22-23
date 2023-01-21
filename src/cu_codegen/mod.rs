@@ -768,9 +768,9 @@ fn gen_exec(
                     body: Box::new(cu::Stmt::Block(Box::new(cu::Stmt::Return(None)))),
                 },
                 cu::Stmt::Expr(cu::Expr::FunCall {
-                    fun: Box::new(cu::Expr::Ident("__syncthreads".to_string())),
+                    fun: Box::new(cu::Expr::Ident("barrier".to_string())),
                     template_args: vec![],
-                    args: vec![],
+                    args: vec![cu::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
                 }),
             ];
 
@@ -990,9 +990,9 @@ fn par_idx_and_sync_stmt(th_hy: &desc::ThreadHierchyTy) -> (desc::Nat, Option<cu
         desc::ThreadHierchyTy::ThreadGrp(_, _, _) => (
             desc::Nat::Ident(desc::Ident::new("threadIdx.x")),
             Some(cu::Stmt::Expr(cu::Expr::FunCall {
-                fun: Box::new(cu::Expr::Ident("__syncthreads".to_string())),
+                fun: Box::new(cu::Expr::Ident("barrier".to_string())),
                 template_args: vec![],
-                args: vec![],
+                args: vec![cu::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
             })),
         ),
         desc::ThreadHierchyTy::WarpGrp(_) => (
@@ -1002,9 +1002,9 @@ fn par_idx_and_sync_stmt(th_hy: &desc::ThreadHierchyTy) -> (desc::Nat, Option<cu
                 Box::new(desc::Nat::Lit(32)),
             ),
             Some(cu::Stmt::Expr(cu::Expr::FunCall {
-                fun: Box::new(cu::Expr::Ident("__syncthreads".to_string())),
+                fun: Box::new(cu::Expr::Ident("barrier".to_string())),
                 template_args: vec![],
-                args: vec![],
+                args: vec![cu::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
             })),
         ),
         desc::ThreadHierchyTy::Warp => (
