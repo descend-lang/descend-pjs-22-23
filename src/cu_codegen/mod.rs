@@ -447,9 +447,9 @@ fn gen_decl_init(
         );
         cu::Stmt::Skip
     } else if let desc::TyKind::Data(desc::DataTy {
-                                         dty: desc::DataTyKind::At(dty, desc::Memory::GpuShared),
-                                         ..
-                                     }) = &e.ty.as_ref().unwrap().ty
+        dty: desc::DataTyKind::At(dty, desc::Memory::GpuShared),
+        ..
+    }) = &e.ty.as_ref().unwrap().ty
     {
         let cu_ty = if let desc::DataTy {
             dty: desc::DataTyKind::Array(elem_dty, n),
@@ -474,6 +474,7 @@ fn gen_decl_init(
         }
     } else {
         let gened_ty = cpp::gen_ty(&e.ty.as_ref().unwrap().ty, mutbl);
+        let gened_ty_2 = gened_ty.clone();
         let (init_expr, cu_ty, checks) = match gened_ty {
             cu::Ty::Array(_, _) => {
                 let (ex, ch) = match gen_expr(e, codegen_ctx, comp_unit, dev_fun, idx_checks) {
@@ -500,7 +501,7 @@ fn gen_decl_init(
         };
         let var_decl = cu::Stmt::VarDecl {
             name: ident.name.clone(),
-            ty: cu_ty,
+            ty: gened_ty_2,
             addr_space: None,
             expr: Some(init_expr),
         };
