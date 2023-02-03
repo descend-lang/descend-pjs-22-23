@@ -6,7 +6,7 @@ fn no_templ_params() -[cpu.thread]-> () <'a, 'b> {
     ()
 }
 
-fn test<T: ty>(x: T) -[cpu.thread]-> T {
+fn test<T: dty>(x: T) -[cpu.thread]-> T {
     let y: T = x;
     y
 }

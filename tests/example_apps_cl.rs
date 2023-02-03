@@ -21,6 +21,14 @@ fn reduce_shared_mem() -> Res {
 }
 
 #[test]
+fn test_generic_dty() -> Res {
+    Ok(println!(
+        "{}",
+        descend::cl_compile("examples/with_tys/generic_data_ty.desc")?
+    ))
+}
+
+#[test]
 fn tree_reduce() -> Res {
     Ok(println!(
         "{}",
