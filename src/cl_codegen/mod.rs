@@ -120,7 +120,6 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
         ),
         is_gpu_function: is_dev_fun(*exec),
         //Template Values are openCL only (cuda can handle Template Params itself)
-        templ_values: vec!()
     }
 }
 

@@ -83,7 +83,6 @@ fn gen_fun_def(gl_fun: &desc::FunDef, comp_unit: &[desc::FunDef], idx_checks: bo
         ),
         is_gpu_function: is_dev_fun(*exec),
         //Template Values are openCL only (cuda can handle Template Params itself)
-        templ_values: vec!(),
     }
 }
 
@@ -869,7 +868,6 @@ fn gen_kernel_function(param_decls: Vec<ParamDecl>, body: Stmt) -> cu::Item{
     cu::Item::FunDef {
         name: "__kernel".to_string(),
         templ_params: vec![],
-        templ_values: vec![],
         params: param_decls,
         ret_ty: cu::Ty::Scalar(cu::ScalarTy::Void),
         //TODO: IDX Checks

@@ -1,3 +1,6 @@
+mod visit_mut;
+mod visit;
+
 use crate::ast::Nat;
 use std::collections::HashMap;
 
@@ -14,8 +17,6 @@ pub enum Item {
         name: String,
         //TODO: This needs to be handeled differently for Kernel and C++ Functions
         templ_params: Vec<TemplParam>,
-        //TODO: Remove
-        templ_values: Vec<Vec<Expr>>,
         params: Vec<ParamDecl>,
         ret_ty: Ty,
         body: Stmt,
@@ -28,7 +29,6 @@ impl Item {
         Item::FunDef {
             name,
             templ_params: vec![],
-            templ_values: vec![],
             params: vec![],
             // Empty return type is unit ()
             ret_ty: Ty::Tuple(vec![]),

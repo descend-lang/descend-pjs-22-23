@@ -478,7 +478,6 @@ fn test_print_program() -> std::fmt::Result {
         Item::FunDef {
             name: "test_host_fun".to_string(),
             templ_params: vec![],
-            templ_values: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
@@ -507,7 +506,6 @@ fn test_print_program() -> std::fmt::Result {
         Item::FunDef {
             name: "__kernel__".to_string(),
             templ_params: vec![],
-            templ_values: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
@@ -533,7 +531,6 @@ fn test_print_program() -> std::fmt::Result {
         Item::FunDef {
             name: "test_gpu_fun".to_string(),
             templ_params: vec![],
-            templ_values: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),

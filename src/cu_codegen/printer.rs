@@ -390,7 +390,6 @@ fn test_print_program() -> std::fmt::Result {
                 param_name: "n".to_string(),
                 ty: Scalar(ScalarTy::SizeT),
             }],
-            templ_values: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
