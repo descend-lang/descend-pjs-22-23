@@ -1,7 +1,9 @@
 mod visit_mut;
 mod visit;
 pub(crate) mod cpp_to_c_mapper;
+mod display;
 
+use std::fmt::Formatter;
 use crate::ast::Nat;
 
 // TODO big difference in sizes beteween variants

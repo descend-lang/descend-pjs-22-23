@@ -15,5 +15,5 @@ pub fn compile(file_path: &str) -> Result<String, ErrorReported> {
     let source = parser::SourceCode::from_file(file_path)?;
     let mut compil_unit = parser::parse(&source)?;
     ty_check::ty_check(&mut compil_unit)?;
-    Ok(cl_codegen::gen(&compil_unit, false))
+    Ok(cl_codegen::gen_cl(&compil_unit, false))
 }
