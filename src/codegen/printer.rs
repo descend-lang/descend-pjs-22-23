@@ -1,9 +1,10 @@
-use super::cu_ast::{
+use crate::cpp_ast::{
     BinOp, BufferKind, Expr, Item, ParamDecl, ScalarTy, Stmt, TemplParam, TemplateArg, Ty, UnOp,
 };
-use crate::codegen::cu_ast::{GpuAddrSpace, Lit};
+use crate::cpp_ast::{GpuAddrSpace, Lit};
 use std::fmt::Formatter;
 use std::env;
+use crate::cpp_ast;
 
 // function cuda_fmt takes Formatter and recursively formats
 // trait CudaFormat has function cuda_fmt so that cuda_fmt_vec can be implemented (alias for fmt_vec)
@@ -116,7 +117,7 @@ impl std::fmt::Display for Stmt {
                 write!(f, "{}", last)
             }
             Expr(expr) => {
-                if let super::cu_ast::Expr::Empty = expr {
+                if let cpp_ast::Expr::Empty = expr {
                     Ok(())
                 } else {
                     write!(f, "{};", expr)

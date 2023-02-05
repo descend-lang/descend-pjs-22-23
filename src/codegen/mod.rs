@@ -1,18 +1,16 @@
-mod cu_ast;
 mod printer;
 
 use crate::ast as desc;
 use crate::ast::visit::Visit;
 use crate::ast::visit_mut::VisitMut;
 use crate::ast::{utils, Mutability};
-use cu_ast as cu;
+use crate::cpp_ast as cu;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
+use crate::c_ast::Item;
 
-// Precondition. all function definitions are successfully typechecked and
-// therefore every subexpression stores a type
-pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
+pub fn gen_items(compil_unit: &desc::CompilUnit, idx_checks: bool) -> cu::CuProgram {
     let fun_defs_to_be_generated = compil_unit
         .fun_defs
         .iter()
@@ -30,13 +28,20 @@ pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
         })
         .cloned()
         .collect::<Vec<desc::FunDef>>();
-    let cu_program = std::iter::once(cu::Item::Include("descend.cuh".to_string()))
+
+     std::iter::once(cu::Item::Include("descend.cuh".to_string()))
         .chain(
             fun_defs_to_be_generated
                 .iter()
                 .map(|fun_def| gen_fun_def(fun_def, &compil_unit.fun_defs, idx_checks)),
         )
-        .collect::<cu::CuProgram>();
+        .collect::<cu::CuProgram>()
+}
+
+// Precondition. all function definitions are successfully typechecked and
+// therefore every subexpression stores a type
+pub fn gen(compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
+    let cu_program = gen_items(compil_unit, idx_checks);
     printer::print(&cu_program)
 }
 
@@ -610,7 +615,7 @@ fn has_generatable_ty(e: &desc::Expr) -> bool {
 }
 
 fn gen_if_else(
-    cond: cu_ast::Expr,
+    cond: cu::Expr,
     e_tt: &desc::Expr,
     e_ff: &desc::Expr,
     codegen_ctx: &mut CodegenCtx,
@@ -640,7 +645,7 @@ fn gen_if_else(
 }
 
 fn gen_if(
-    cond: cu_ast::Expr,
+    cond: cu::Expr,
     e_tt: &desc::Expr,
     codegen_ctx: &mut CodegenCtx,
     comp_unit: &[desc::FunDef],

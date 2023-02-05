@@ -1,13 +1,14 @@
+mod visit_mut;
+mod visit;
+pub(crate) mod cpp_to_c_mapper;
+
 use crate::ast::Nat;
 
-pub(super) type CuProgram = Vec<Item>;
-
 // TODO big difference in sizes beteween variants
-pub(super) enum Item {
+pub enum Item {
     Include(String),
     FunDef {
         name: String,
-        templ_params: Vec<TemplParam>,
         params: Vec<ParamDecl>,
         ret_ty: Ty,
         body: Stmt,
@@ -16,13 +17,13 @@ pub(super) enum Item {
 }
 
 #[derive(Clone, Debug)]
-pub(super) struct ParamDecl {
-    pub(super) name: String,
-    pub(super) ty: Ty,
+pub struct ParamDecl {
+    pub name: String,
+    pub ty: Ty,
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Stmt {
+pub enum Stmt {
     Skip,
     VarDecl {
         name: String,
@@ -57,7 +58,7 @@ pub(super) enum Stmt {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Expr {
+pub enum Expr {
     // TODO Is there a better way to represent Unit values in C++?
     Empty,
     Ident(String),
@@ -66,16 +67,8 @@ pub(super) enum Expr {
         lhs: Box<Expr>,
         rhs: Box<Expr>,
     },
-    Lambda {
-        captures: Vec<crate::ast::Ident>,
-        params: Vec<ParamDecl>,
-        body: Box<Stmt>,
-        ret_ty: Ty,
-        is_dev_fun: bool,
-    },
     FunCall {
         fun: Box<Expr>,
-        template_args: Vec<TemplateArg>,
         args: Vec<Expr>,
     },
     UnOp {
@@ -107,7 +100,7 @@ pub(super) enum Expr {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Lit {
+pub enum Lit {
     Bool(bool),
     I32(i32),
     U32(u32),
@@ -116,13 +109,13 @@ pub(super) enum Lit {
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum UnOp {
+pub enum UnOp {
     Not,
     Neg,
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum BinOp {
+pub enum BinOp {
     Add,
     Sub,
     Mul,
@@ -138,32 +131,21 @@ pub(super) enum BinOp {
     Neq,
 }
 
-pub(super) enum TemplParam {
-    Value { param_name: String, ty: Ty },
-    TyName { name: String },
-}
-
 #[derive(Clone, Debug)]
-pub(super) enum TemplateArg {
-    Expr(Expr),
-    Ty(Ty),
-}
-
-#[derive(Clone, Debug)]
-pub(super) enum Exec {
+pub enum Exec {
     Host,
     Device,
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum GpuAddrSpace {
+pub enum GpuAddrSpace {
     Global,
     Shared,
     Constant,
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum Ty {
+pub enum Ty {
     Scalar(ScalarTy),
     Atomic(ScalarTy),
     Tuple(Vec<Ty>),
@@ -183,21 +165,18 @@ pub(super) enum Ty {
     // "necessarily" the function signature ... https://abseil.io/tips/109
     // Top-level const
     Const(Box<Ty>),
-    // Template parameter identifer
-    Ident(String),
 }
 
 // TODO this is not really a Cuda type and should maybe be represented by a generic type construct
 #[derive(Clone, Debug)]
-pub(super) enum BufferKind {
+pub enum BufferKind {
     CpuMem,
     GpuGlobal,
     Ident(String),
 }
 
 #[derive(Clone, Debug)]
-pub(super) enum ScalarTy {
-    Auto,
+pub enum ScalarTy {
     Void,
     I32,
     U32,
