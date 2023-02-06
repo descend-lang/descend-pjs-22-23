@@ -397,7 +397,6 @@ impl OpenCLPrint for ScalarTy {
         use ScalarTy::*;
 
         match self {
-            Auto => format!("auto"),
             Void => format!("void"),
             I32 => {
                 if is_dev_fun {
