@@ -3,7 +3,7 @@ mod printer;
 use std::collections::HashMap;
 use crate::codegen as cu_codegen;
 use crate::ast as desc;
-use crate::ast::{BinOpNat, Nat};
+use crate::ast::{BinOpNat, Nat, ScalarTy};
 use crate::c_ast as c;
 use crate::cpp_ast as cpp;
 use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr, walk_nat, walk_param_decl, walk_ty};
@@ -60,6 +60,7 @@ impl<'a> CopyVisitor<'a> {
             });
 
             if let Some(template_fun) = cpp_fun_def {
+                let mangled_function_name = mangle_function_name(fun_identifier.clone(), &template_args);
                 let mut monomorphizer = MonomorphizeVisitor {
                     template_args,
                     template_fun,
@@ -68,7 +69,7 @@ impl<'a> CopyVisitor<'a> {
 
                 if let Some(monomorphized_item) = monomorphizer.map_item(template_fun) {
                     self.c_program.push(monomorphized_item);
-                    c::Expr::FunCall { fun: Box::new(c::Expr::Ident("MonomorphizedName".to_string())), args: vec![] }
+                    c::Expr::FunCall { fun: Box::new(c::Expr::Ident(mangled_function_name)), args: map_list!(self, map_expr, args) }
                 } else {
                     panic!("This cannot happen");
                 }
@@ -84,6 +85,48 @@ impl<'a> CopyVisitor<'a> {
             panic!("This should not happen");
         }
     }
+}
+
+fn mangle_function_name(function_name: String, template_args: &Vec<TemplateArg> ) -> String {
+    let mut mangled_name = function_name.clone();
+    template_args.iter().map(|f| {
+        match f {
+            TemplateArg::Expr(expr) => {
+                if let cpp::Expr::Nat(nat) = expr {
+                    match nat {
+                        Nat::Lit(size) => {size.to_string()},
+                        _ => { panic!("Trying to Mangle Nat which is not Lit") }
+                    }
+                } else {
+                    panic!("Trying to mangle Exprssion which is not a nat")
+                }
+            }
+            TemplateArg::Ty(ty) => {
+                match ty {
+                    Ty::Scalar(scalar_ty) => {scalar_ty_to_name(scalar_ty)}
+                    Ty::Atomic(scalar_ty) => {scalar_ty_to_name(scalar_ty)}
+                    _ => {panic!("Unmapped Type!")}
+                }
+            }
+        }
+    }).for_each(|str| mangled_name.push_str(&*str));
+
+    mangled_name
+}
+
+fn scalar_ty_to_name(ty: &cpp::ScalarTy) -> String{
+    match ty {
+        cpp::ScalarTy::Void => {"void"}
+        cpp::ScalarTy::I32 => {"i32"}
+        cpp::ScalarTy::U32 => {"u32"}
+        cpp::ScalarTy::F32 => {"f32"}
+        cpp::ScalarTy::F64 => {"f64"}
+        cpp::ScalarTy::Bool => {"bool"}
+        cpp::ScalarTy::Gpu => {"gpu"}
+        cpp::ScalarTy::SizeT => {"size-t"}
+        cpp::ScalarTy::Memory => {"memory"}
+        _ => {panic!("Unmapped Type!")}
+    }.to_string()
 }
 
 impl<'a> CppToCMap for CopyVisitor<'a> {
@@ -121,8 +164,6 @@ impl<'b> MonomorphizeVisitor<'b> {
                     }
                 }
             }
-
-
         } else {
             panic!("No Monomorph for include!");
         }
@@ -143,7 +184,7 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                 // Templated Functions are mapped only when their apply is mapped. Therefor we filter them here
                 if (!templ_params.is_empty()) {
                     Some(c::Item::FunDef {
-                        name: "Todo:MangleName!".to_string(),
+                        name: mangle_function_name(name.clone(), &self.template_args),
                         params: map_list!(self, map_param_decl, params),
                         ret_ty: self.map_ty(ret_ty),
                         body: self.map_stmt(body),
