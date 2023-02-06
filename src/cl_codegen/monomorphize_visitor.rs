@@ -1,13 +1,16 @@
 use std::collections::HashMap;
-use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_nat};
+use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr, walk_nat};
 use crate::{cpp_ast as cpp, map_list};
 use crate::c_ast as c;
 use crate::ast::Nat;
+use crate::cl_codegen::CopyVisitor;
+use crate::cpp_ast::Expr;
 
 pub struct MonomorphizeVisitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
     pub(crate) template_fun: &'b cpp::Item,
-    pub(crate) values_for_names: HashMap<String, cpp::TemplateArg>
+    pub(crate) values_for_names: HashMap<String, cpp::TemplateArg>,
+    pub(crate) c_program: &'b mut Vec<c::Item>
 }
 
 impl<'b> MonomorphizeVisitor<'b> {
@@ -41,7 +44,6 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                 ret_ty,
                 body,
                 is_dev_fun } => {
-                // Templated Functions are mapped only when their apply is mapped. Therefor we filter them here
                 if !templ_params.is_empty() {
                     Some(c::Item::FunDef {
                         name: mangle_function_name(name.clone(), &self.template_args),
@@ -86,6 +88,34 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                     Box::new(self.map_nat(rhs)))
             }
             _ => walk_nat(self, nat)
+        }
+    }
+
+    fn map_expr(&mut self, expr: &Expr) -> c::Expr {
+        match expr {
+            cpp::Expr::Lambda { captures,
+                params,
+                body,
+                ret_ty,
+                is_dev_fun } => {
+
+                let mut copy_visitor = CopyVisitor{ cu_program: &mut vec![], c_program: vec![] };
+                if let Some(kernel_item) = copy_visitor.map_item(&cpp::Item::FunDef {
+                    name: "kernel".to_string(),
+                    templ_params: vec![],
+                    params: params.clone(),
+                    ret_ty: ret_ty.clone(),
+                    body: *body.clone(),
+                    is_dev_fun: is_dev_fun.clone(),
+                }) {
+                    self.c_program.push(kernel_item);
+                }
+
+
+                // Lambdas should only appear for exec. Exec is called with Raw-String Param in OpenCL
+                c::Expr::Ident("kernel".to_string())
+            },
+            _ => walk_expr(self, expr)
         }
     }
 

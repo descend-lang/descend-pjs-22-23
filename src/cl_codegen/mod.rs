@@ -59,6 +59,7 @@ impl<'a> CopyVisitor<'a> {
                     template_args,
                     template_fun,
                     values_for_names: HashMap::new(),
+                    c_program: &mut self.c_program
                 };
 
                 if let Some(monomorphized_item) = monomorphizer.map_item(template_fun) {

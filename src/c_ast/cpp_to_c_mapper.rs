@@ -276,8 +276,7 @@ pub fn walk_expr<V: CppToCMap>(mapper: &mut V, expr: & cpp::Expr) -> c::Expr {
             c::Expr::Nat(mapper.map_nat(nat))
         }
         cpp::Expr::Lambda { captures, params, body, ret_ty, is_dev_fun } => {
-            // Lambdas should only appear for exec. Exec is called with Raw-String Param in OpenCL
-            c::Expr::Ident("kernel".to_string())
+            panic!("Lambdas are not supported in C!");
         }
     }
 }
