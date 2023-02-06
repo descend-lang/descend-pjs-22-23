@@ -10,6 +10,9 @@ pub struct MonomorphizeVisitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
     pub(crate) template_fun: &'b cpp::Item,
     pub(crate) values_for_names: HashMap<String, cpp::TemplateArg>,
+    // This is a borrowed instance from the CopyVisitor.
+    // Both structs share this, so when we push in this struct, we also push in the CopyVisitor
+    //Todo: Refac so we don't need this Hack
     pub(crate) c_program: &'b mut Vec<c::Item>
 }
 
@@ -99,6 +102,7 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                 ret_ty,
                 is_dev_fun } => {
 
+                //TODO: Refac. Bad that we create another copyVisitor, also Bad Syntax I think
                 let mut copy_visitor = CopyVisitor{ cu_program: &mut vec![], c_program: vec![] };
                 if let Some(kernel_item) = copy_visitor.map_item(&cpp::Item::FunDef {
                     name: "kernel".to_string(),
