@@ -5,7 +5,7 @@ use crate::ast as desc;
 use crate::c_ast as c;
 use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr};
 use crate::cpp_ast as cpp;
-use crate::cpp_ast::{Item, TemplateArg};
+use crate::cpp_ast::{Expr, Item, TemplateArg};
 
 mod printer;
 mod monomorphize_visitor;
@@ -88,7 +88,18 @@ impl<'a> CppToCMap for CopyVisitor<'a> {
             cpp::Expr::FunCall { fun, template_args, args } => {
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
-                } else {
+                }
+                else if let Expr::Ident(ident) = fun.as_ref() {
+                    if ident == "__syncthreads" {
+                        c::Expr::FunCall {
+                            fun: Box::new(c::Expr::Ident("barrier".to_string())),
+                            args: vec![c::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())]
+                        }
+                    } else {
+                        walk_expr(self, expr)
+                    }
+                }
+                else {
                     walk_expr(self, expr)
                 }
             }
