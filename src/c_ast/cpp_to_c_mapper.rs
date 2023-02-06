@@ -11,7 +11,7 @@ macro_rules! walk_list {
     };
 }
 
-macro_rules! map_list {
+#[macro_export] macro_rules! map_list {
     ($mapper: expr, $method: ident, $list: expr) => {
         $list.to_vec().into_iter().map(|mut f| $mapper.$method(& f)).collect()
     };
@@ -276,8 +276,8 @@ pub fn walk_expr<V: CppToCMap>(mapper: &mut V, expr: & cpp::Expr) -> c::Expr {
             c::Expr::Nat(mapper.map_nat(nat))
         }
         cpp::Expr::Lambda { captures, params, body, ret_ty, is_dev_fun } => {
-            //panic!("Cannot Map Lambda");
-            c::Expr::Empty
+            // Lambdas should only appear for exec. Exec is called with Raw-String Param in OpenCL
+            c::Expr::Ident("kernel".to_string())
         }
     }
 }
