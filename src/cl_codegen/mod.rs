@@ -89,6 +89,7 @@ impl<'a> CppToCMap for CopyVisitor<'a> {
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
                 }
+                // Cuda Syncthreads are barriers in OpenCL
                 else if let Expr::Ident(ident) = fun.as_ref() {
                     if ident == "__syncthreads" {
                         c::Expr::FunCall {

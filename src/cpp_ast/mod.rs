@@ -146,6 +146,21 @@ pub enum TemplParam {
     TyName { name: String },
 }
 
+impl Clone for TemplParam {
+    fn clone(&self) -> Self {
+        match self
+        {
+            TemplParam::Value { param_name, ty } => {
+                TemplParam::Value { param_name: param_name.clone(), ty: ty.clone() }
+            }
+            TemplParam::TyName { name } => {
+                TemplParam::TyName {name: name.clone()
+                }
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub enum TemplateArg {
     Expr(Expr),

@@ -21,6 +21,14 @@ fn reduce_shared_mem() -> Res {
 }
 
 #[test]
+fn test_template_type() -> Res {
+    Ok(println!(
+        "{}",
+        descend::compile("examples/with_tys/template_type.desc")?
+    ))
+}
+
+#[test]
 fn tree_reduce() -> Res {
     Ok(println!(
         "{}",

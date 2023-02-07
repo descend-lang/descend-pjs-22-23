@@ -592,6 +592,7 @@ peg::parser! {
             / "mem" { Kind::Memory }
             / "ty" { Kind::Ty }
             / "prv" { Kind::Provenance }
+            / "dty" { Kind::DataTy }
 
         rule ident() -> Ident
             = begin:position!() ident:$(identifier()) end:position!() {
