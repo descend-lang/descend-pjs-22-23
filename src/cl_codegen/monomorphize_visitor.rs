@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr, walk_nat};
 use crate::{cpp_ast as cpp, map_list};
 use crate::c_ast as c;
-use crate::ast::Nat;
+use crate::ast::{Ident, Nat};
 use crate::cl_codegen::CopyVisitor;
 use crate::cpp_ast::{Expr, Item};
 
@@ -80,6 +80,22 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                         }
                         cpp::TemplateArg::Ty(_) => { panic!("Template Param missmatch trying to assing type to nat!") }
                     }
+                } else if ident.name.contains("threadIdx") {
+                    let dimension_index = get_dimension_index_from_x_y_z(&ident.name);
+
+                    Nat::App(Ident {
+                        name: "get_local_id".to_string(),
+                        span: None,
+                        is_implicit: false,
+                    }, vec![Nat::Lit(dimension_index)])
+                } else if ident.name.contains("blockIdx") {
+                    let dimension_index = get_dimension_index_from_x_y_z(&ident.name);
+
+                    Nat::App(Ident {
+                        name: "get_group_id".to_string(),
+                        span: None,
+                        is_implicit: false,
+                    }, vec![Nat::Lit(dimension_index)])
                 } else {
                     walk_nat(self, nat)
                 }
@@ -178,4 +194,19 @@ fn scalar_ty_to_name(ty: &cpp::ScalarTy) -> String {
         cpp::ScalarTy::Memory => { "memory" }
         _ => { panic!("Unmapped Type!") }
     }.to_string()
+}
+
+fn get_dimension_index_from_x_y_z(identifier: &String) -> usize {
+    let dimension: Vec<char> = identifier.chars().rev().take(1).collect();
+
+    let dimension_index = match dimension.get(0) {
+        None => { panic!("Cannot get Dimension from ThreadIdx") }
+        Some(dimension_axis) => {
+            if 'x' == *dimension_axis { 0 }
+            else if 'y' == *dimension_axis { 1 }
+            else if 'z' == *dimension_axis { 2 }
+            else { panic!("Unknown Dimension Axis {}", dimension_axis) }
+        }
+    };
+    dimension_index
 }
