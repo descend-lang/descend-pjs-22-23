@@ -1,10 +1,10 @@
 // use crate::cpp_ast::Item;
 
 
-use crate::c_ast::{
+use crate::cpp_ast::{
     BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, Ty, UnOp,
 };
-use crate::c_ast::{GpuAddrSpace, Lit};
+use crate::cpp_ast::{GpuAddrSpace, Lit};
 use core::panic;
 use std::env;
 
@@ -25,12 +25,20 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
         panic!("{:?}", res);
     }
 
+    let mut gpu_string = String::new();
     // print kernel programm itself
     for i in gpu_program {
-        let res = writeln!(&mut code, "{}", i.print_cl(true));
+        let gpu_string = writeln!(&mut gpu_string, "{}", i.print_cl(true));
         if res.is_err() {
             panic!("{:?}", res);
         }
+    }
+
+    gpu_string = clang_format(&gpu_string);
+
+    let res = writeln!(&mut code, "{}", gpu_string);
+    if res.is_err() {
+        panic!("{:?}", res);
     }
 
     // print end of raw string for kernel programm
@@ -149,7 +157,7 @@ impl OpenCLPrint for Stmt {
                 s
             },
             Expr(expr) => {
-                if let crate::c_ast::Expr::Empty = expr {
+                if let crate::cpp_ast::Expr::Empty = expr {
                     String::new()
                 } else {
                     format!("{};", expr.print_cl(is_dev_fun))
@@ -215,7 +223,7 @@ impl OpenCLPrint for Expr {
         use std::fmt::Write;
         let mut s = String::new();
 
-        match  self {
+        match self {
             Empty => s,
             Ident(name) => format!("{name}"),
             Lit(l) => format!("{l}"),
@@ -225,6 +233,7 @@ impl OpenCLPrint for Expr {
             } => format!("{} = {}", l_val.print_cl(is_dev_fun), r_val.print_cl(is_dev_fun)),
             FunCall {
                 fun,
+                template_args,
                 args,
             } => {
                 write!(&mut s, "{}", fun.print_cl(is_dev_fun).as_str());
@@ -263,7 +272,8 @@ impl OpenCLPrint for Expr {
                 write!(&mut s, "}}");
                 s
             },
-            Nat(n) => format!("{n}")
+            Nat(n) => format!("{n}"),
+            Lambda { .. } => {panic!("Lambdas are not allowed in OpenCL")}
         }
     }
 }
@@ -388,6 +398,7 @@ impl OpenCLPrint for Ty {
             },
             Scalar(sty) => format!("{}", sty.print_cl(is_dev_fun)),
             Atomic(at) => format!("descend::Atomic<{}>", at.print_cl(is_dev_fun)),
+            Ident(_) => {panic!("Template Param Ident found!")}
         }
     }
 }
@@ -436,6 +447,7 @@ impl OpenCLPrint for ScalarTy {
             }, //  format!("bool"),
             Memory => format!("descend::Memory"),
             Gpu => format!("descend::Gpu"),
+            Auto => {panic!("No use of Auto in OpenCL")}
         }
     }
 }
@@ -463,6 +475,7 @@ fn test_print_program() -> std::fmt::Result {
     let cpu_program = vec![
         Item::FunDef {
             name: "test_host_fun".to_string(),
+            templ_params: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
@@ -490,6 +503,7 @@ fn test_print_program() -> std::fmt::Result {
     let gpu_program = vec![
         Item::FunDef {
             name: "__kernel__".to_string(),
+            templ_params: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
@@ -514,6 +528,7 @@ fn test_print_program() -> std::fmt::Result {
         },
         Item::FunDef {
             name: "test_gpu_fun".to_string(),
+            templ_params: vec![],
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
