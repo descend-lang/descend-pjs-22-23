@@ -407,8 +407,8 @@ impl OpenCLPrint for Ty {
                 s
             },
             Buffer(ty, buff_kind) => match buff_kind {
-                BufferKind::CpuMem => format!("HeapBuffer<{}>", ty.print_cl(is_dev_fun)),
-                BufferKind::GpuGlobal => format!("GpuBuffer<{}>", ty.print_cl(is_dev_fun)),
+                BufferKind::CpuMem => format!("descend::HeapBuffer<{}>", ty.print_cl(is_dev_fun)),
+                BufferKind::GpuGlobal => format!("descend::GpuBuffer<{}>", ty.print_cl(is_dev_fun)),
                 BufferKind::Ident(name) => format!("{}", name)
             },
             Scalar(sty) => format!("{}", sty.print_cl(is_dev_fun)),
