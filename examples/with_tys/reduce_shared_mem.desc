@@ -1,11 +1,11 @@
-fn no_templ_params() -[cpu.thread]-> () <'a, 'b> {
+fn main() -[cpu.thread]-> i32 <'a, 'b> {
 let x = 42;
 let y = 4.2;
 let a = create_array::<100>(0);
 let mut result = create_array::<100>(0);
 
 reduce_shared_mem::<100, 4, 'a, 'b>(&'a shrd a, &'b uniq result);
-()
+0
 }
 
 fn reduce_shared_mem<gs: nat, bs: nat, a: prv, b: prv>(

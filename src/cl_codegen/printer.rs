@@ -15,17 +15,26 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
     }
 
     // print first part of raw string (for kernel programm)
-    let res = writeln!(&mut code, "std::string kernel = R\"(");
+    let res = writeln!(&mut code, "extern const std::string kernel = R\"(");
     if res.is_err() {
         panic!("{:?}", res);
     }
 
+    let mut kernel_program = "".to_string();
+
     // print kernel programm itself
     for i in gpu_program {
-        let res = writeln!(&mut code, "{}", i.print_cl(true));
+        let res = writeln!(&mut kernel_program, "{}", i.print_cl(true));
         if res.is_err() {
             panic!("{:?}", res);
         }
+    }
+
+    kernel_program = clang_format(&kernel_program);
+
+    let res = writeln!(&mut code, "{}", kernel_program);
+    if res.is_err() {
+        panic!("{:?}", res);
     }
 
     // print end of raw string for kernel programm
@@ -91,7 +100,7 @@ impl OpenCLPrint for Item {
                 if !templ_params.is_empty() {
                     panic!("There are no template parameters in OpenCL");
                 }
-                if name == "__kernel__" {
+                if name.contains("__kernel") {
                     let res = write!(&mut s, "__kernel void {} (", name );
                     if res.is_err() {
                         panic!("{:?}", res);
@@ -444,7 +453,7 @@ impl OpenCLPrint for ScalarTy {
                     format!("descend::f64")
                 }
             } // format!("descend::f64"),
-            SizeT => format!("std::size_t"),
+            SizeT => format!("size_t"),
             Bool => {
                 if is_dev_fun {
                     format!("char")

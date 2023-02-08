@@ -122,25 +122,31 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
             } => {
                 if let Item::FunDef { templ_params, .. } = self.template_fun.clone() {
                     if let Some(kernel_item) = self.map_item(&cpp::Item::FunDef {
-                        name: "kernel".to_string(),
+                        name: "__kernel".to_string(),
                         templ_params: templ_params.to_vec(),
                         params: params.clone(),
                         ret_ty: ret_ty.clone(),
                         body: *body.clone(),
                         is_dev_fun: is_dev_fun.clone(),
                     }) {
+                        let kernel_name: String;
+                        if let Item::FunDef { name, .. } = &kernel_item {
+                            kernel_name = name.clone();
+                        } else {
+                            panic!("Generated Include from Lambda (this won't happen)");
+                        }
                         self.c_program.push(kernel_item);
+                        //TODO Currently no String params supported... Add them
+                        cpp::Expr::Ident(kernel_name)
+                    } else {
+                        panic!("Could not Generate Lambda as Kernel maybe forgot to use monomorphize visitor?");
                     }
+                } else {
+                    panic!("Template Function of Monomorphize Visitor is include! Maybe take a break?")
                 }
-
-                // Lambdas should only appear for exec. Exec is called with Raw-String Param in OpenCL
-                cpp::Expr::Ident("kernel".to_string())
             }
             cpp::Expr::FunCall { fun, template_args, args } => {
                 if let Expr::Ident(ident) = fun.as_ref() {
-                    if ident.contains("exec") {
-                            println!("Found it");
-                    }
                     if ident == "__syncthreads" {
                         cpp::Expr::FunCall {
                             fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
@@ -207,10 +213,7 @@ fn get_dimension_index_from_x_y_z(identifier: &String) -> usize {
     let dimension_index = match dimension.get(0) {
         None => { panic!("Cannot get Dimension from ThreadIdx") }
         Some(dimension_axis) => {
-            if 'x' == *dimension_axis { 0 }
-            else if 'y' == *dimension_axis { 1 }
-            else if 'z' == *dimension_axis { 2 }
-            else { panic!("Unknown Dimension Axis {}", dimension_axis) }
+            if 'x' == *dimension_axis { 0 } else if 'y' == *dimension_axis { 1 } else if 'z' == *dimension_axis { 2 } else { panic!("Unknown Dimension Axis {}", dimension_axis) }
         }
     };
     dimension_index

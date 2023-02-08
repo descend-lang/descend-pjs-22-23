@@ -1,5 +1,3 @@
-extern crate core;
-
 use crate::error::ErrorReported;
 
 #[macro_use]
