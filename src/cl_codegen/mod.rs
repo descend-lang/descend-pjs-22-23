@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::{codegen as cu_codegen, map_list};
@@ -15,19 +16,19 @@ pub fn gen_cl (compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
 
     let mut copy_visitor = CopyVisitor{ cu_program: &cu_program, c_program: vec![]};
 
-    let mut c_program: Vec<c::Item> = cu_program.iter().filter_map(|f| copy_visitor.map_item(f)).collect();
+    let mut c_program: Vec<cpp::Item> = cu_program.iter().filter_map(|f| copy_visitor.map_item(f)).collect();
     // Copy Visitor creates monomorphized functions in his own vector
     c_program.append(&mut copy_visitor.c_program);
 
 
-    let include = c::Item::Include ( "descend.hpp".to_string() );
-    let mut cl_cpu_program:Vec<c::Item> = vec![];
-    let mut cl_gpu_program:Vec<c::Item> = vec![];
+    let include = cpp::Item::Include ( "descend.hpp".to_string() );
+    let mut cl_cpu_program:Vec<cpp::Item> = vec![];
+    let mut cl_gpu_program:Vec<cpp::Item> = vec![];
 
     c_program.into_iter().for_each(|item| {
         match item {
-            c::Item::Include { .. }  => { },
-            c::Item::FunDef { is_dev_fun, .. } => {
+            cpp::Item::Include { .. }  => { },
+            cpp::Item::FunDef { is_dev_fun, .. } => {
                 if is_dev_fun {
                     cl_gpu_program.push(item);
                 } else {
@@ -42,11 +43,11 @@ pub fn gen_cl (compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
 
 struct CopyVisitor<'a> {
     cu_program: &'a Vec<cpp::Item>,
-    c_program: Vec<c::Item>
+    c_program: Vec<cpp::Item>
 }
 
 impl<'a> CopyVisitor<'a> {
-    fn monomorphize(&mut self, fun: &cpp::Expr, template_args: Vec<TemplateArg>, args: Vec<cpp::Expr>) -> c::Expr {
+    fn monomorphize(&mut self, fun: &cpp::Expr, template_args: Vec<TemplateArg>, args: Vec<cpp::Expr>) -> cpp::Expr {
         if let cpp::Expr::Ident(fun_identifier) = fun {
             let cpp_fun_def = self.cu_program.iter().find(|f| match f {
                 Item::Include(_) => {false}
@@ -64,15 +65,20 @@ impl<'a> CopyVisitor<'a> {
 
                 if let Some(monomorphized_item) = monomorphizer.map_item(template_fun) {
                     self.c_program.push(monomorphized_item);
-                    c::Expr::FunCall { fun: Box::new(c::Expr::Ident(mangled_function_name)), args: map_list!(self, map_expr, args) }
+                    cpp::Expr::FunCall { fun: Box::new(cpp::Expr::Ident(mangled_function_name)), template_args: vec![], args: map_list!(self, map_expr, args) }
                 } else {
                     panic!("This cannot happen");
                 }
             } else {
+                // This is the case where a Function from the header is called with template Params.
+                // Since this cannot happen in der Kernel, we do not monomorphize here
                 // Todo: Handle the case of unfound Standart Functions
-                let new_fun = c::Expr::Ident(fun_identifier.clone());
+                let new_fun = cpp::Expr::Ident(fun_identifier.clone());
                 let new_args = vec![];
-                c::Expr::FunCall { fun: Box::new(new_fun), args: new_args }
+                cpp::Expr::FunCall {
+                    fun: Box::new(new_fun),
+                    template_args: template_args,
+                    args: new_args }
                 //panic!("Could not find Function Definition for Call {}", fun_identifier)
             }
         }
@@ -83,18 +89,24 @@ impl<'a> CopyVisitor<'a> {
 }
 
 impl<'a> CppToCMap for CopyVisitor<'a> {
-    fn map_expr(&mut self, expr: &cpp::Expr) -> c::Expr {
+    fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::FunCall { fun, template_args, args } => {
+                if let cpp::Expr::Ident(id) = fun.borrow() {
+                    if id.contains("exec") {
+                        println!("Found it");
+                    }
+                }
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
                 }
                 // Cuda Syncthreads are barriers in OpenCL
                 else if let Expr::Ident(ident) = fun.as_ref() {
                     if ident == "__syncthreads" {
-                        c::Expr::FunCall {
-                            fun: Box::new(c::Expr::Ident("barrier".to_string())),
-                            args: vec![c::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())]
+                        cpp::Expr::FunCall {
+                            fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
+                            template_args: vec![],
+                            args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())]
                         }
                     } else {
                         walk_expr(self, expr)

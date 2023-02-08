@@ -13,7 +13,7 @@ pub struct MonomorphizeVisitor<'b> {
     // This is a borrowed instance from the CopyVisitor.
     // Both structs share this, so when we push in this struct, we also push in the CopyVisitor
     //Todo: Refac so we don't need this Hack
-    pub(crate) c_program: &'b mut Vec<c::Item>,
+    pub(crate) c_program: &'b mut Vec<cpp::Item>,
 }
 
 impl<'b> MonomorphizeVisitor<'b> {
@@ -37,7 +37,7 @@ impl<'b> MonomorphizeVisitor<'b> {
 }
 
 impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
-    fn map_item(&mut self, item: &cpp::Item) -> Option<c::Item> {
+    fn map_item(&mut self, item: &cpp::Item) -> Option<cpp::Item> {
         self.find_names_for_template_args();
         match item {
             cpp::Item::FunDef {
@@ -49,8 +49,9 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                 is_dev_fun
             } => {
                 if !templ_params.is_empty() {
-                    Some(c::Item::FunDef {
+                    Some(cpp::Item::FunDef {
                         name: mangle_function_name(name.clone(), &self.template_args),
+                        templ_params: vec![],
                         params: map_list!(self, map_param_decl, params),
                         ret_ty: self.map_ty(ret_ty),
                         body: self.map_stmt(body),
@@ -110,7 +111,7 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
         }
     }
 
-    fn map_expr(&mut self, expr: &Expr) -> c::Expr {
+    fn map_expr(&mut self, expr: &Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::Lambda {
                 captures,
@@ -133,14 +134,18 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                 }
 
                 // Lambdas should only appear for exec. Exec is called with Raw-String Param in OpenCL
-                c::Expr::Ident("kernel".to_string())
+                cpp::Expr::Ident("kernel".to_string())
             }
             cpp::Expr::FunCall { fun, template_args, args } => {
                 if let Expr::Ident(ident) = fun.as_ref() {
+                    if ident.contains("exec") {
+                            println!("Found it");
+                    }
                     if ident == "__syncthreads" {
-                        c::Expr::FunCall {
-                            fun: Box::new(c::Expr::Ident("barrier".to_string())),
-                            args: vec![c::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
+                        cpp::Expr::FunCall {
+                            fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
+                            template_args: vec![],
+                            args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
                         }
                     } else {
                         walk_expr(self, expr)

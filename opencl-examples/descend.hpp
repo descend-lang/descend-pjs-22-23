@@ -29,7 +29,7 @@ namespace descend {
     // Todo: As per openCL Specification it is not allowed to pass bool to a kernel
 
     template<typename T, std::size_t n>
-    using array = std::array<T, n>;
+    using array = std::array<T, n>*;
 
 
     class Gpu {
@@ -291,6 +291,11 @@ namespace descend {
                 std::cerr << getErrorString(e.err()) << std::endl;
             }
         }
+    }
+
+    template<std::size_t n, typename DescendType>
+    descend::array<DescendType, n> create_array() {
+        return new std::array<DescendType, n>;
     }
 }
 

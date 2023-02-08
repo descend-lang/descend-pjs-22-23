@@ -1,9 +1,4 @@
-// use crate::cpp_ast::Item;
-
-
-use crate::cpp_ast::{
-    BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, Ty, UnOp,
-};
+use crate::cpp_ast::{BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, Ty, UnOp, TemplateArg};
 use crate::cpp_ast::{GpuAddrSpace, Lit};
 use core::panic;
 use std::env;
@@ -25,20 +20,12 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
         panic!("{:?}", res);
     }
 
-    let mut gpu_string = String::new();
     // print kernel programm itself
     for i in gpu_program {
-        let gpu_string = writeln!(&mut gpu_string, "{}", i.print_cl(true));
+        let res = writeln!(&mut code, "{}", i.print_cl(true));
         if res.is_err() {
             panic!("{:?}", res);
         }
-    }
-
-    gpu_string = clang_format(&gpu_string);
-
-    let res = writeln!(&mut code, "{}", gpu_string);
-    if res.is_err() {
-        panic!("{:?}", res);
     }
 
     // print end of raw string for kernel programm
@@ -89,9 +76,10 @@ trait OpenCLPrint {
 impl OpenCLPrint for Item {
     fn print_cl(&self, gpu_fun: bool) -> String {
         match self {
-            Item::Include (content ) => format!("#include \"{content}\"\n"),
+            Item::Include (content) => format!("#include \"{content}\"\n"),
             Item::FunDef {
                 name,
+                templ_params,
                 params,
                 ret_ty,
                 body,
@@ -100,6 +88,9 @@ impl OpenCLPrint for Item {
             } => {
                 use std::fmt::Write;
                 let mut s = String::new();
+                if !templ_params.is_empty() {
+                    panic!("There are no template parameters in OpenCL");
+                }
                 if name == "__kernel__" {
                     let res = write!(&mut s, "__kernel void {} (", name );
                     if res.is_err() {
@@ -216,6 +207,14 @@ impl OpenCLPrint for Stmt {
     }
 }
 
+impl OpenCLPrint for TemplateArg {
+    fn print_cl(&self, is_dev_fun: bool) -> String {
+        match self {
+            TemplateArg::Expr(expr) => {format!("{expr}")}
+            TemplateArg::Ty(ty) => {format!("{ty}")}
+        }
+    }
+}
 
 impl OpenCLPrint for Expr {
     fn print_cl(&self, is_dev_fun: bool) -> String {
@@ -223,7 +222,7 @@ impl OpenCLPrint for Expr {
         use std::fmt::Write;
         let mut s = String::new();
 
-        match self {
+        match  self {
             Empty => s,
             Ident(name) => format!("{name}"),
             Lit(l) => format!("{l}"),
@@ -231,12 +230,20 @@ impl OpenCLPrint for Expr {
                 lhs: l_val,
                 rhs: r_val
             } => format!("{} = {}", l_val.print_cl(is_dev_fun), r_val.print_cl(is_dev_fun)),
+            Lambda {..} => panic!("There are not lamba functions in OpenCL"),
             FunCall {
                 fun,
                 template_args,
                 args,
             } => {
                 write!(&mut s, "{}", fun.print_cl(is_dev_fun).as_str());
+                if !template_args.is_empty() {
+                    write!(&mut s, "<");
+                    if let Some(a) = fmt_vec(template_args, ", ", is_dev_fun) {
+                        write!(&mut s, "{a}");
+                    }
+                    write!(&mut s, ">");
+                }
                 write!(&mut s, "(");
                 if let Some(a) = fmt_vec(args, ", ", is_dev_fun) {
                     write!(&mut s, "{a}");
@@ -272,8 +279,7 @@ impl OpenCLPrint for Expr {
                 write!(&mut s, "}}");
                 s
             },
-            Nat(n) => format!("{n}"),
-            Lambda { .. } => {panic!("Lambdas are not allowed in OpenCL")}
+            Nat(n) => format!("{n}")
         }
     }
 }
@@ -398,7 +404,7 @@ impl OpenCLPrint for Ty {
             },
             Scalar(sty) => format!("{}", sty.print_cl(is_dev_fun)),
             Atomic(at) => format!("descend::Atomic<{}>", at.print_cl(is_dev_fun)),
-            Ident(_) => {panic!("Template Param Ident found!")}
+            Ident(name) => format!("{}", name),
         }
     }
 }
@@ -408,6 +414,7 @@ impl OpenCLPrint for ScalarTy {
         use ScalarTy::*;
 
         match self {
+            Auto => format!("auto"),
             Void => format!("void"),
             I32 => {
                 if is_dev_fun {
@@ -447,7 +454,6 @@ impl OpenCLPrint for ScalarTy {
             }, //  format!("bool"),
             Memory => format!("descend::Memory"),
             Gpu => format!("descend::Gpu"),
-            Auto => {panic!("No use of Auto in OpenCL")}
         }
     }
 }
@@ -470,7 +476,9 @@ fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> 
 fn test_print_program() -> std::fmt::Result {
     use Ty::*;
 
-    let include_header = Item::Include("header".to_string());
+    let include_header = Item::Include(
+        "descend.hpp".to_string()
+    );
 
     let cpu_program = vec![
         Item::FunDef {
@@ -492,7 +500,7 @@ fn test_print_program() -> std::fmt::Result {
             ret_ty: Scalar(ScalarTy::Void),
             body: Stmt::VarDecl {
                 name: "a_f".to_string(),
-                ty: Ty::Scalar(ScalarTy::I32),
+                ty: Ty::Scalar(ScalarTy::Auto),
                 addr_space: None,
                 expr: Some(Expr::Ident("a".to_string())),
             },
