@@ -92,25 +92,8 @@ impl<'a> CppToCMap for CopyVisitor<'a> {
     fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::FunCall { fun, template_args, args } => {
-                if let cpp::Expr::Ident(id) = fun.borrow() {
-                    if id.contains("exec") {
-                        println!("Found it");
-                    }
-                }
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
-                }
-                // Cuda Syncthreads are barriers in OpenCL
-                else if let Expr::Ident(ident) = fun.as_ref() {
-                    if ident == "__syncthreads" {
-                        cpp::Expr::FunCall {
-                            fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
-                            template_args: vec![],
-                            args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())]
-                        }
-                    } else {
-                        walk_expr(self, expr)
-                    }
                 }
                 else {
                     walk_expr(self, expr)

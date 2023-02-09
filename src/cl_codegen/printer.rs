@@ -15,7 +15,7 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
     }
 
     // print first part of raw string (for kernel programm)
-    let res = writeln!(&mut code, "extern const std::string kernel = R\"(");
+    let res = writeln!(&mut code, "const std::string kernel = R\"(");
     if res.is_err() {
         panic!("{:?}", res);
     }

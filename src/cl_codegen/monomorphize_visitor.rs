@@ -153,6 +153,16 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
                             template_args: vec![],
                             args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
                         }
+                    } else if ident == "descend::gpu_device" {
+
+                        let mut new_args = args.clone();
+                        new_args.push(Expr::Ident("kernel".to_string()));
+
+                        cpp::Expr::FunCall {
+                            fun: fun.clone(),
+                            template_args: vec![],
+                            args: new_args
+                        }
                     } else {
                         walk_expr(self, expr)
                     }

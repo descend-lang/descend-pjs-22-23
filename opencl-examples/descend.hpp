@@ -17,8 +17,6 @@ inline void check_opencl_err(const cl_int err, const char * const file, const in
     }
 }
 
-extern const std::string kernel;
-
 namespace descend {
 
     using i32 = cl_int;
@@ -62,16 +60,22 @@ namespace descend {
         cl::Device *device;
         cl::Context *context;
         cl::CommandQueue *queue;
+        cl::Program *program;
 
-        Gpu(cl::Device* device, cl::Context* context, cl::CommandQueue* queue){
+        Gpu(cl::Device* device, cl::Context* context, cl::CommandQueue* queue, cl::Program* program){
             this->device = device;
             this->context = context;
             this->queue = queue;
+            this->program = program;
             std::cout << "Created Gpu Device" << std::endl;
         }
         ~ Gpu () {
             std::cout << "Destroying GPU Device" << std::endl;
             this->queue->finish();
+            delete this->queue;
+            delete this->program;
+            delete this->context;
+            delete this->device;
         }
     };
 
@@ -83,8 +87,7 @@ namespace descend {
     template<Memory mem, typename DescendType>
     class Buffer;
 
-    Gpu gpu_device(std::size_t device_id) {
-
+    Gpu gpu_device(std::size_t device_id, std::string kernel_code) {
         std::vector<cl::Platform> platforms;
         cl::Platform::get(&platforms);
         if(platforms.empty()){
@@ -106,11 +109,15 @@ namespace descend {
             throw std::runtime_error(getErrorString(err));
         }
 
+        cl::Program* program = new cl::Program(*context, kernel_code, true, &err);
+        if(err != CL_SUCCESS) {
+            throw std::runtime_error(getErrorString(err));
+        }
+
         std::cout << "Adresses (context, devices, queue)" << context <<  ", " << device << ", " << queue << std::endl;
 
-        return Gpu(device, context, queue);
+        return Gpu(device, context, queue, program);
     };
-
 
     template<typename DescendType>
     class Buffer<Memory::CpuHeap, DescendType> {
@@ -274,18 +281,13 @@ namespace descend {
     //cl:Buffer aufruf als Pointer in Kernel als *pointer
     template<std::size_t num_work_groups, std::size_t local_size, typename ...Args>
     void exec(const descend::Gpu * const gpu, std::string kernel_name, const GpuBuffer<Args>*... args) {
-        //TODO: Build Program in own function
-        //TODO: Define Global Error-Handler for OpenCL (int-code handling and Exception Handling)
+
         cl_int err;
-        cl::Program program(*gpu->context, kernel, false, &err);
-        if (err != CL_SUCCESS) {
-            throw std::runtime_error(getErrorString(err));
-        }
 
         try {
-            program.build(*gpu->device);
+            //gpu->program->build(*gpu->device);
 
-            cl::Kernel kernel(program, kernel_name.c_str(), &err);
+            cl::Kernel kernel(*gpu->program, kernel_name.c_str(), &err);
             std::cout << "Created Kernel" << std::endl;
 
             cl_uint index = 0;
@@ -321,7 +323,7 @@ namespace descend {
         catch (cl::Error &e) {
             if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
                 // Check the build status
-                std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(*gpu->device);
+                std::string build_log = gpu->program->getBuildInfo<CL_PROGRAM_BUILD_LOG>(*gpu->device);
                 std::cerr << "Build Log: " << build_log << ":" << std::endl;
             } else {
                 std::cerr << getErrorString(e.err()) << std::endl;
