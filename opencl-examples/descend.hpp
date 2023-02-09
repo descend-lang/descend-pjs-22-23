@@ -83,7 +83,7 @@ namespace descend {
     template<Memory mem, typename DescendType>
     class Buffer;
 
-    Gpu* gpu_device(std::size_t device_id) {
+    Gpu gpu_device(std::size_t device_id) {
 
         std::vector<cl::Platform> platforms;
         cl::Platform::get(&platforms);
@@ -108,7 +108,7 @@ namespace descend {
 
         std::cout << "Adresses (context, devices, queue)" << context <<  ", " << device << ", " << queue << std::endl;
 
-        return new Gpu(device, context, queue);
+        return Gpu(device, context, queue);
     };
 
 
@@ -261,13 +261,13 @@ namespace descend {
     using GpuBuffer = Buffer<Memory::GpuGlobal, DescendType>;
 
     template<typename DescendType, typename PtrType>
-    GpuBuffer<DescendType>* gpu_alloc_copy(const Gpu * const __restrict__ gpu, const PtrType * const __restrict__ init_ptr) {
-        return new descend::GpuBuffer<DescendType>(gpu, init_ptr);
+    GpuBuffer<DescendType> gpu_alloc_copy(const Gpu * const __restrict__ gpu, const PtrType * const __restrict__ init_ptr) {
+        return descend::GpuBuffer<DescendType>(gpu, init_ptr);
     }
 
     template<typename DescendType, typename PtrTypeHost>
-    auto copy_to_host(const GpuBuffer<DescendType> device_buffer, PtrTypeHost * const __restrict__ host_ptr) -> void {
-        device_buffer.read_to_host(host_ptr);
+    auto copy_to_host(const GpuBuffer<DescendType>* device_buffer, PtrTypeHost * const __restrict__ host_ptr) -> void {
+        device_buffer->read_to_host(host_ptr);
     }
 
 
