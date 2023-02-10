@@ -8,7 +8,6 @@ pub mod error;
 mod parser;
 mod ty_check;
 mod cpp_ast;
-mod c_ast;
 mod cl_codegen;
 
 pub fn compile(file_path: &str) -> Result<String, ErrorReported> {

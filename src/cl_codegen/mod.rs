@@ -1,15 +1,14 @@
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::{codegen as cu_codegen, map_list};
 use crate::ast as desc;
-use crate::c_ast as c;
-use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr};
+use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr};
 use crate::cpp_ast as cpp;
 use crate::cpp_ast::{Expr, Item, TemplateArg};
 
 mod printer;
 mod monomorphize_visitor;
+pub(crate) mod cuda_to_cl_mapper;
 
 pub fn gen_cl (compil_unit: &desc::CompilUnit, idx_checks: bool) -> String {
     let mut cu_program = cu_codegen::gen_items(compil_unit, idx_checks);
@@ -88,24 +87,12 @@ impl<'a> CopyVisitor<'a> {
     }
 }
 
-impl<'a> CppToCMap for CopyVisitor<'a> {
+impl<'a> CuToClMap for CopyVisitor<'a> {
     fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::FunCall { fun, template_args, args } => {
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
-                }
-                // Cuda Syncthreads are barriers in OpenCL
-                else if let Expr::Ident(ident) = fun.as_ref() {
-                    if ident == "__syncthreads" {
-                        cpp::Expr::FunCall {
-                            fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
-                            template_args: vec![],
-                            args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())]
-                        }
-                    } else {
-                        walk_expr(self, expr)
-                    }
                 }
                 else {
                     walk_expr(self, expr)

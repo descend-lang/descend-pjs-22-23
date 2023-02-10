@@ -8,7 +8,6 @@ use crate::cpp_ast as cu;
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::sync::atomic::{AtomicI32, Ordering};
-use crate::c_ast::Item;
 
 pub fn gen_items(compil_unit: &desc::CompilUnit, idx_checks: bool) -> cu::CuProgram {
     let fun_defs_to_be_generated = compil_unit

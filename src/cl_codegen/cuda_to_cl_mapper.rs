@@ -1,4 +1,3 @@
-use crate::c_ast as c;
 use crate::cpp_ast as cpp;
 use crate::cpp_ast::{TemplateArg, TemplParam};
 
@@ -28,45 +27,45 @@ macro_rules! map_opt {
     }
 }
 
-pub trait CppToCMap: Sized {
-    fn map_item(&mut self, item: & cpp::Item) -> Option<cpp::Item> {
+pub trait CuToClMap: Sized {
+    fn map_item(&mut self, item: &cpp::Item) -> Option<cpp::Item> {
         walk_item(self, item)
     }
-    fn map_param_decl(&mut self, param_decl: & cpp::ParamDecl) -> cpp::ParamDecl {
+    fn map_param_decl(&mut self, param_decl: &cpp::ParamDecl) -> cpp::ParamDecl {
         walk_param_decl(self, param_decl)
     }
-    fn map_ty(&mut self, ty: & cpp::Ty) -> cpp::Ty {
+    fn map_ty(&mut self, ty: &cpp::Ty) -> cpp::Ty {
         walk_ty(self, ty)
     }
-    fn map_stmt(&mut self, stmt: & cpp::Stmt) -> cpp::Stmt {
+    fn map_stmt(&mut self, stmt: &cpp::Stmt) -> cpp::Stmt {
         walk_stmt(self, stmt)
     }
-    fn map_scalar_ty(&mut self, scalar_ty: & cpp::ScalarTy) -> cpp::ScalarTy {
+    fn map_scalar_ty(&mut self, scalar_ty: &cpp::ScalarTy) -> cpp::ScalarTy {
         walk_scalar_ty(self, scalar_ty)
     }
-    fn map_nat(&mut self, nat: & crate::ast::Nat) -> crate::ast::Nat { walk_nat(self, nat) }
-    fn map_buffer_kind(&mut self, buffer_kind: & cpp::BufferKind) -> cpp::BufferKind {
+    fn map_nat(&mut self, nat: &crate::ast::Nat) -> crate::ast::Nat { walk_nat(self, nat) }
+    fn map_buffer_kind(&mut self, buffer_kind: &cpp::BufferKind) -> cpp::BufferKind {
         walk_buffer_kind(self, buffer_kind)
     }
-    fn map_gpu_addr_space(&mut self, addr_space: & cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
+    fn map_gpu_addr_space(&mut self, addr_space: &cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
         walk_gpu_addr_space(self, addr_space)
     }
-    fn map_expr(&mut self, expr: & cpp::Expr) -> cpp::Expr {
+    fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         walk_expr(self, expr)
     }
-    fn map_ident(&mut self, ident: & crate::ast::Ident) -> crate::ast::Ident {
+    fn map_ident(&mut self, ident: &crate::ast::Ident) -> crate::ast::Ident {
         walk_ident(self, ident)
     }
-    fn map_bin_op_nat(&mut self, bin_op_nat: & crate::ast::BinOpNat) -> crate::ast::BinOpNat {
+    fn map_bin_op_nat(&mut self, bin_op_nat: &crate::ast::BinOpNat) -> crate::ast::BinOpNat {
         walk_bin_op_nat(self, bin_op_nat)
     }
-    fn map_lit(&mut self, lit: & cpp::Lit) -> cpp::Lit {
+    fn map_lit(&mut self, lit: &cpp::Lit) -> cpp::Lit {
         walk_lit(self, lit)
     }
-    fn map_un_op(&mut self, un_op: & cpp::UnOp) -> cpp::UnOp {
+    fn map_un_op(&mut self, un_op: &cpp::UnOp) -> cpp::UnOp {
         walk_un_op(self, un_op)
     }
-    fn map_bin_op(&mut self, bin_op: & cpp::BinOp) -> cpp::BinOp {
+    fn map_bin_op(&mut self, bin_op: &cpp::BinOp) -> cpp::BinOp {
         walk_bin_op(self, bin_op)
     }
     fn map_template_arg(&mut self, template_arg: &cpp::TemplateArg) -> cpp::TemplateArg {
@@ -77,7 +76,7 @@ pub trait CppToCMap: Sized {
     }
 }
 
-pub fn walk_item<V: CppToCMap>(mapper: &mut V, item: & cpp::Item) -> Option<cpp::Item> {
+pub fn walk_item<V: CuToClMap>(mapper: &mut V, item: &cpp::Item) -> Option<cpp::Item> {
     match item {
         cpp::Item::Include(name) => { Some(cpp::Item::Include(name.clone())) }
         cpp::Item::FunDef { name, params, templ_params, ret_ty, body, is_dev_fun } => {
@@ -98,11 +97,11 @@ pub fn walk_item<V: CppToCMap>(mapper: &mut V, item: & cpp::Item) -> Option<cpp:
     }
 }
 
-pub fn walk_param_decl<V: CppToCMap>(mapper: &mut V, param_decl: & cpp::ParamDecl) -> cpp::ParamDecl {
-    cpp::ParamDecl { name: param_decl.name.clone(), ty: mapper.map_ty(& param_decl.ty) }
+pub fn walk_param_decl<V: CuToClMap>(mapper: &mut V, param_decl: &cpp::ParamDecl) -> cpp::ParamDecl {
+    cpp::ParamDecl { name: param_decl.name.clone(), ty: mapper.map_ty(&param_decl.ty) }
 }
 
-pub fn walk_ty<V: CppToCMap>(mapper: &mut V, ty: & cpp::Ty) -> cpp::Ty {
+pub fn walk_ty<V: CuToClMap>(mapper: &mut V, ty: &cpp::Ty) -> cpp::Ty {
     match ty {
         cpp::Ty::Scalar(scalar_ty) => {
             cpp::Ty::Scalar(mapper.map_scalar_ty(scalar_ty))
@@ -141,7 +140,7 @@ pub fn walk_ty<V: CppToCMap>(mapper: &mut V, ty: & cpp::Ty) -> cpp::Ty {
     }
 }
 
-pub fn walk_stmt<V: CppToCMap>(mapper: &mut V, stmt: & cpp::Stmt) -> cpp::Stmt {
+pub fn walk_stmt<V: CuToClMap>(mapper: &mut V, stmt: &cpp::Stmt) -> cpp::Stmt {
     match stmt {
         cpp::Stmt::Skip => { cpp::Stmt::Skip }
         cpp::Stmt::VarDecl { name, ty, addr_space, expr, } => {
@@ -189,7 +188,7 @@ pub fn walk_stmt<V: CppToCMap>(mapper: &mut V, stmt: & cpp::Stmt) -> cpp::Stmt {
     }
 }
 
-pub fn walk_scalar_ty<V: CppToCMap>(mapper: &mut V, scalar_ty: & cpp::ScalarTy) -> cpp::ScalarTy {
+pub fn walk_scalar_ty<V: CuToClMap>(mapper: &mut V, scalar_ty: &cpp::ScalarTy) -> cpp::ScalarTy {
     match scalar_ty {
         cpp::ScalarTy::Auto => { panic!("Cannot Map Auto Types") }
         cpp::ScalarTy::Void => { cpp::ScalarTy::Void }
@@ -204,11 +203,11 @@ pub fn walk_scalar_ty<V: CppToCMap>(mapper: &mut V, scalar_ty: & cpp::ScalarTy) 
     }
 }
 
-pub fn walk_nat<V: CppToCMap>(mapper: &mut V, nat: & crate::ast::Nat) -> crate::ast::Nat {
+pub fn walk_nat<V: CuToClMap>(mapper: &mut V, nat: &crate::ast::Nat) -> crate::ast::Nat {
     nat.clone()
 }
 
-pub fn walk_buffer_kind<V: CppToCMap>(mapper: &mut V, buffer_kind: & cpp::BufferKind) -> cpp::BufferKind {
+pub fn walk_buffer_kind<V: CuToClMap>(mapper: &mut V, buffer_kind: &cpp::BufferKind) -> cpp::BufferKind {
     match buffer_kind {
         cpp::BufferKind::CpuMem => { cpp::BufferKind::CpuMem }
         cpp::BufferKind::GpuGlobal => { cpp::BufferKind::GpuGlobal }
@@ -216,7 +215,7 @@ pub fn walk_buffer_kind<V: CppToCMap>(mapper: &mut V, buffer_kind: & cpp::Buffer
     }
 }
 
-pub fn walk_gpu_addr_space<V: CppToCMap>(mapper: &mut V, gpu_addr_space: & cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
+pub fn walk_gpu_addr_space<V: CuToClMap>(mapper: &mut V, gpu_addr_space: &cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
     match gpu_addr_space {
         cpp::GpuAddrSpace::Global => { cpp::GpuAddrSpace::Global }
         //GpuAddrSpace::Local => {}
@@ -225,7 +224,7 @@ pub fn walk_gpu_addr_space<V: CppToCMap>(mapper: &mut V, gpu_addr_space: & cpp::
     }
 }
 
-pub fn walk_expr<V: CppToCMap>(mapper: &mut V, expr: & cpp::Expr) -> cpp::Expr {
+pub fn walk_expr<V: CuToClMap>(mapper: &mut V, expr: &cpp::Expr) -> cpp::Expr {
     match expr {
         cpp::Expr::Empty => { cpp::Expr::Empty }
         cpp::Expr::Ident(ident) => { cpp::Expr::Ident(ident.clone()) }
@@ -235,38 +234,58 @@ pub fn walk_expr<V: CppToCMap>(mapper: &mut V, expr: & cpp::Expr) -> cpp::Expr {
         cpp::Expr::Assign { lhs, rhs } => {
             cpp::Expr::Assign {
                 lhs: Box::new(mapper.map_expr(lhs)),
-                rhs: Box::new(mapper.map_expr(rhs)) }
+                rhs: Box::new(mapper.map_expr(rhs)),
+            }
         }
         cpp::Expr::FunCall { fun, args, template_args } => {
-            if !template_args.is_empty() {
-                println!("Function with template Args {}", template_args.len());
-            }
-            cpp::Expr::FunCall {
-                fun: Box::new(mapper.map_expr(fun)),
-                template_args: map_list!(mapper, map_template_arg, template_args),
-                args: map_list!(mapper, map_expr, args)
+            match fun.as_ref() {
+                cpp::Expr::Ident(ident) => {
+                    if ident == "__syncthreads" {
+                        cpp::Expr::FunCall {
+                            fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
+                            template_args: vec![],
+                            args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
+                        }
+                    } else {
+                        cpp::Expr::FunCall {
+                            fun: Box::new(mapper.map_expr(fun)),
+                            template_args: map_list!(mapper, map_template_arg, template_args),
+                            args: map_list!(mapper, map_expr, args),
+                        }
+                    }
+                }
+                _ => {
+                    cpp::Expr::FunCall {
+                        fun: Box::new(mapper.map_expr(fun)),
+                        template_args: map_list!(mapper, map_template_arg, template_args),
+                        args: map_list!(mapper, map_expr, args),
+                    }
+                }
             }
         }
         cpp::Expr::UnOp { op, arg } => {
             cpp::Expr::UnOp {
                 op: mapper.map_un_op(op),
-                arg: Box::new(mapper.map_expr(expr)) }
+                arg: Box::new(mapper.map_expr(expr)),
+            }
         }
         cpp::Expr::BinOp { op, lhs, rhs } => {
-            cpp::Expr::BinOp{
+            cpp::Expr::BinOp {
                 op: mapper.map_bin_op(op),
                 lhs: Box::new(mapper.map_expr(lhs)),
-                rhs: Box::new(mapper.map_expr(rhs))
+                rhs: Box::new(mapper.map_expr(rhs)),
             }
         }
         cpp::Expr::ArraySubscript { array, index } => {
             cpp::Expr::ArraySubscript {
                 array: Box::new(mapper.map_expr(array)),
-                index: mapper.map_nat(index) }
+                index: mapper.map_nat(index),
+            }
         }
         cpp::Expr::Proj { tuple, n } => {
             cpp::Expr::Proj {
-                tuple: Box::new(mapper.map_expr(tuple)), n: n.clone()
+                tuple: Box::new(mapper.map_expr(tuple)),
+                n: n.clone(),
             }
         }
         cpp::Expr::InitializerList { elems } => {
@@ -290,50 +309,50 @@ pub fn walk_expr<V: CppToCMap>(mapper: &mut V, expr: & cpp::Expr) -> cpp::Expr {
     }
 }
 
-pub fn walk_ident<V: CppToCMap>(mapper: &mut V, ident: & crate::ast::Ident) -> crate::ast::Ident {
+pub fn walk_ident<V: CuToClMap>(mapper: &mut V, ident: &crate::ast::Ident) -> crate::ast::Ident {
     ident.clone()
 }
 
-pub fn walk_bin_op_nat<V: CppToCMap>(mapper: &mut V, bin_op_nat: & crate::ast::BinOpNat) -> crate::ast::BinOpNat {
+pub fn walk_bin_op_nat<V: CuToClMap>(mapper: &mut V, bin_op_nat: &crate::ast::BinOpNat) -> crate::ast::BinOpNat {
     bin_op_nat.clone()
 }
 
-pub fn walk_lit<V: CppToCMap>(mapper: &mut V, lit: & cpp::Lit) -> cpp::Lit {
+pub fn walk_lit<V: CuToClMap>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
     match lit {
-        cpp::Lit::Bool(b) => {cpp::Lit::Bool(b.clone())}
-        cpp::Lit::I32(i) => {cpp::Lit::I32(i.clone())}
-        cpp::Lit::U32(u) => {cpp::Lit::U32(u.clone())}
-        cpp::Lit::F32(f) => {cpp::Lit::F32(f.clone())}
-        cpp::Lit::F64(f) => {cpp::Lit::F64(f.clone())}
+        cpp::Lit::Bool(b) => { cpp::Lit::Bool(b.clone()) }
+        cpp::Lit::I32(i) => { cpp::Lit::I32(i.clone()) }
+        cpp::Lit::U32(u) => { cpp::Lit::U32(u.clone()) }
+        cpp::Lit::F32(f) => { cpp::Lit::F32(f.clone()) }
+        cpp::Lit::F64(f) => { cpp::Lit::F64(f.clone()) }
     }
 }
 
-pub fn walk_un_op<V: CppToCMap>(mapper: &mut V, un_op: & cpp::UnOp) -> cpp::UnOp {
+pub fn walk_un_op<V: CuToClMap>(mapper: &mut V, un_op: &cpp::UnOp) -> cpp::UnOp {
     match un_op {
-        cpp::UnOp::Not => {cpp::UnOp::Not}
-        cpp::UnOp::Neg => {cpp::UnOp::Neg}
+        cpp::UnOp::Not => { cpp::UnOp::Not }
+        cpp::UnOp::Neg => { cpp::UnOp::Neg }
     }
 }
 
-pub fn walk_bin_op<V: CppToCMap>(mapper: &mut V, bin_op: & cpp::BinOp) -> cpp::BinOp{
+pub fn walk_bin_op<V: CuToClMap>(mapper: &mut V, bin_op: &cpp::BinOp) -> cpp::BinOp {
     match bin_op {
-        cpp::BinOp::Add => {cpp::BinOp::Add}
-        cpp::BinOp::Sub => {cpp::BinOp::Sub}
-        cpp::BinOp::Mul => {cpp::BinOp::Mul}
-        cpp::BinOp::Div => {cpp::BinOp::Div}
-        cpp::BinOp::Mod => {cpp::BinOp::Mod}
-        cpp::BinOp::And => {cpp::BinOp::And}
-        cpp::BinOp::Or => {cpp::BinOp::Or}
-        cpp::BinOp::Eq => {cpp::BinOp::Eq}
-        cpp::BinOp::Lt => {cpp::BinOp::Lt}
-        cpp::BinOp::Le => {cpp::BinOp::Le}
-        cpp::BinOp::Gt => {cpp::BinOp::Gt}
-        cpp::BinOp::Ge => {cpp::BinOp::Ge}
-        cpp::BinOp::Neq => {cpp::BinOp::Neq}
+        cpp::BinOp::Add => { cpp::BinOp::Add }
+        cpp::BinOp::Sub => { cpp::BinOp::Sub }
+        cpp::BinOp::Mul => { cpp::BinOp::Mul }
+        cpp::BinOp::Div => { cpp::BinOp::Div }
+        cpp::BinOp::Mod => { cpp::BinOp::Mod }
+        cpp::BinOp::And => { cpp::BinOp::And }
+        cpp::BinOp::Or => { cpp::BinOp::Or }
+        cpp::BinOp::Eq => { cpp::BinOp::Eq }
+        cpp::BinOp::Lt => { cpp::BinOp::Lt }
+        cpp::BinOp::Le => { cpp::BinOp::Le }
+        cpp::BinOp::Gt => { cpp::BinOp::Gt }
+        cpp::BinOp::Ge => { cpp::BinOp::Ge }
+        cpp::BinOp::Neq => { cpp::BinOp::Neq }
     }
 }
 
-pub fn walk_template_arg<V: CppToCMap>(mapper: &mut V, template_arg: &cpp::TemplateArg) -> cpp::TemplateArg {
+pub fn walk_template_arg<V: CuToClMap>(mapper: &mut V, template_arg: &cpp::TemplateArg) -> cpp::TemplateArg {
     match template_arg {
         cpp::TemplateArg::Expr(expr) => {
             cpp::TemplateArg::Expr(mapper.map_expr(expr))
@@ -344,16 +363,16 @@ pub fn walk_template_arg<V: CppToCMap>(mapper: &mut V, template_arg: &cpp::Templ
     }
 }
 
-pub fn walk_templ_param<V: CppToCMap>(mapper: &mut V, templ_param: &cpp::TemplParam) -> cpp::TemplParam {
+pub fn walk_templ_param<V: CuToClMap>(mapper: &mut V, templ_param: &cpp::TemplParam) -> cpp::TemplParam {
     match templ_param {
         TemplParam::Value { param_name, ty } => {
             TemplParam::Value {
                 param_name: param_name.clone(),
-                ty: mapper.map_ty(ty)
+                ty: mapper.map_ty(ty),
             }
         }
         TemplParam::TyName { name } => {
-            TemplParam::TyName {name: name.clone() }
+            TemplParam::TyName { name: name.clone() }
         }
     }
 }
