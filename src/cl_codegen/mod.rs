@@ -92,11 +92,6 @@ impl<'a> CppToCMap for CopyVisitor<'a> {
     fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::FunCall { fun, template_args, args } => {
-                if let cpp::Expr::Ident(id) = fun.borrow() {
-                    if id.contains("exec") {
-                        println!("Found it");
-                    }
-                }
                 if !template_args.is_empty() {
                     self.monomorphize(fun, template_args.clone(), args.clone())
                 }

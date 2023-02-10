@@ -1,10 +1,8 @@
 use std::collections::HashMap;
 use crate::c_ast::cpp_to_c_mapper::{CppToCMap, walk_expr, walk_nat};
 use crate::{cpp_ast as cpp, map_list};
-use crate::c_ast as c;
 use crate::ast::{Ident, Nat};
-use crate::cl_codegen::CopyVisitor;
-use crate::cpp_ast::{Expr, Item};
+use crate::cpp_ast::{Item, TemplateArg, TemplParam};
 
 pub struct MonomorphizeVisitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
@@ -111,48 +109,37 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
         }
     }
 
-    fn map_expr(&mut self, expr: &Expr) -> cpp::Expr {
+    fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
-            cpp::Expr::Lambda {
-                captures,
-                params,
-                body,
-                ret_ty,
-                is_dev_fun
-            } => {
-                if let Item::FunDef { templ_params, .. } = self.template_fun.clone() {
-                    if let Some(kernel_item) = self.map_item(&cpp::Item::FunDef {
-                        name: "__kernel".to_string(),
-                        templ_params: templ_params.to_vec(),
-                        params: params.clone(),
-                        ret_ty: ret_ty.clone(),
-                        body: *body.clone(),
-                        is_dev_fun: is_dev_fun.clone(),
-                    }) {
-                        let kernel_name: String;
-                        if let Item::FunDef { name, .. } = &kernel_item {
-                            kernel_name = name.clone();
-                        } else {
-                            panic!("Generated Include from Lambda (this won't happen)");
-                        }
-                        self.c_program.push(kernel_item);
-                        //TODO Currently no String params supported... Add them
-                        cpp::Expr::Ident(kernel_name)
-                    } else {
-                        panic!("Could not Generate Lambda as Kernel maybe forgot to use monomorphize visitor?");
-                    }
-                } else {
-                    panic!("Template Function of Monomorphize Visitor is include! Maybe take a break?")
-                }
-            }
             cpp::Expr::FunCall { fun, template_args, args } => {
-                if let Expr::Ident(ident) = fun.as_ref() {
+                if let cpp::Expr::Ident(ident) = fun.as_ref() {
                     if ident == "__syncthreads" {
                         cpp::Expr::FunCall {
                             fun: Box::new(cpp::Expr::Ident("barrier".to_string())),
                             template_args: vec![],
                             args: vec![cpp::Expr::Ident("CLK_LOCAL_MEM_FENCE".to_string())],
                         }
+                    } else if ident.contains("exec") {
+                        let exec_new = if let Item::FunDef { templ_params, .. } = self.template_fun.clone() {
+                            let lambda_item = get_lambda_from_exec(args, templ_params);
+                            let exec_new = if let Some(monomorphized_lambda) = self.map_item(&lambda_item) {
+                                let kernel_name = if let Item::FunDef { name, .. } = &monomorphized_lambda {
+                                    name.clone()
+                                } else {
+                                    panic!("Mapped Include from Exec Lambda");
+                                };
+                                self.c_program.push(monomorphized_lambda);
+
+                                // The new Exec call should be walked by the monomorphize visitor, so it too is monomorphized
+                                walk_expr(self, &map_exec(&fun, &template_args, &args, kernel_name))
+                            } else {
+                                panic!("Monomorphozation returned nonen")
+                            };
+                            exec_new
+                        } else {
+                            panic!("Template Fun is Include");
+                        };
+                        exec_new
                     } else {
                         walk_expr(self, expr)
                     }
@@ -162,6 +149,45 @@ impl<'b> CppToCMap for MonomorphizeVisitor<'b> {
             }
             _ => walk_expr(self, expr)
         }
+    }
+}
+
+fn map_exec(fun_ident: &cpp::Expr, template_args: &Vec<TemplateArg>, args: &Vec<cpp::Expr>, kernel_name: String) -> cpp::Expr {
+    // Args are:
+    let kernel_args = &mut args.clone().into_iter().skip(2).collect();
+    let kernel_name_expr = cpp::Expr::Ident(kernel_name);
+    let kernel_raw_string_expr = cpp::Expr::Ident("kernel".to_string());
+
+    let mut args_new = vec![args[0].clone(), kernel_name_expr, kernel_raw_string_expr];
+    args_new.append(kernel_args);
+
+    cpp::Expr::FunCall {
+        fun: Box::new(fun_ident.clone()),
+        template_args: template_args.clone(),
+        args: args_new,
+    }
+}
+
+fn get_lambda_from_exec(args: &Vec<cpp::Expr>, template_params: &Vec<TemplParam>) -> cpp::Item {
+    if let Some(item) = args.iter().filter_map(|f| {
+        match f {
+            cpp::Expr::Lambda { captures, params, body, ret_ty, is_dev_fun } => {
+                let fun_def = Item::FunDef {
+                    name: "__kernel".to_string(),
+                    templ_params: template_params.to_vec(),
+                    params: params.to_vec(),
+                    ret_ty: ret_ty.clone(),
+                    body: *body.clone(),
+                    is_dev_fun: is_dev_fun.clone(),
+                };
+                Some(fun_def)
+            }
+            _ => { None }
+        }
+    }).last() {
+        item
+    } else {
+        panic!("No Lambda found in Exec");
     }
 }
 

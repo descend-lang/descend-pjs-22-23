@@ -17,8 +17,6 @@ inline void check_opencl_err(const cl_int err, const char * const file, const in
     }
 }
 
-extern const std::string kernel;
-
 namespace descend {
 
     using i32 = cl_int;
@@ -273,7 +271,7 @@ namespace descend {
 
     //cl:Buffer aufruf als Pointer in Kernel als *pointer
     template<std::size_t num_work_groups, std::size_t local_size, typename ...Args>
-    void exec(const descend::Gpu * const gpu, std::string kernel_name, const GpuBuffer<Args>*... args) {
+    void exec(const descend::Gpu * const gpu, std::string kernel_name, std::string kernel, const GpuBuffer<Args>*... args) {
         //TODO: Build Program in own function
         //TODO: Define Global Error-Handler for OpenCL (int-code handling and Exception Handling)
         cl_int err;
