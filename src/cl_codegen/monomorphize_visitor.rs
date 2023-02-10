@@ -1,8 +1,8 @@
 use std::collections::HashMap;
-use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr, walk_nat};
+use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr, walk_nat, walk_ty};
 use crate::{cpp_ast as cpp, map_list};
 use crate::ast::{Ident, Nat};
-use crate::cpp_ast::{Item, Lit, TemplateArg, TemplParam};
+use crate::cpp_ast::{Item, Lit, TemplateArg, TemplParam, Ty};
 
 pub struct MonomorphizeVisitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
@@ -149,6 +149,25 @@ impl<'b> CuToClMap for MonomorphizeVisitor<'b> {
             }
             _ => walk_expr(self, expr)
         }
+    }
+
+    fn map_ty(&mut self, ty: &Ty) -> Ty {
+        match ty {
+            Ty::Ident(ident) => {
+                if let Some(template_arg) = self.values_for_names.get(ident) {
+                    match template_arg {
+                        TemplateArg::Expr(_) => {panic!("Trying to Monomorphize Expression to Template Type")}
+                        TemplateArg::Ty(ty) => {
+                            ty.clone()
+                        }
+                    }
+                } else {
+                    walk_ty(self, ty)
+                }
+            }
+            _ => walk_ty(self, ty)
+        }
+
     }
 }
 
