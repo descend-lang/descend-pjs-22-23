@@ -324,6 +324,7 @@ pub fn walk_lit<V: CuToClMap>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
         cpp::Lit::U32(u) => { cpp::Lit::U32(u.clone()) }
         cpp::Lit::F32(f) => { cpp::Lit::F32(f.clone()) }
         cpp::Lit::F64(f) => { cpp::Lit::F64(f.clone()) }
+        cpp::Lit::String(s) => {cpp::Lit::String(s.clone())}
     }
 }
 

@@ -2249,6 +2249,7 @@ fn gen_templ_param(ty_ident: &desc::IdentKinded) -> cu::TemplParam {
             ty: cu::Ty::Scalar(cu::ScalarTy::Memory),
         },
         desc::Kind::Ty => cu::TemplParam::TyName { name },
+        desc::Kind::DataTy => cu::TemplParam::TyName { name },
         _ => panic!("Cannot generate template parameter for {:?}", ty_ident.kind),
     }
 }

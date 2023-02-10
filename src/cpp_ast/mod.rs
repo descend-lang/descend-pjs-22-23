@@ -116,6 +116,7 @@ pub enum Lit {
     U32(u32),
     F32(f32),
     F64(f64),
+    String(String),
 }
 
 #[derive(Clone, Debug)]

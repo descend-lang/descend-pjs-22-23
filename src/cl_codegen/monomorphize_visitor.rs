@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr, walk_nat};
 use crate::{cpp_ast as cpp, map_list};
 use crate::ast::{Ident, Nat};
-use crate::cpp_ast::{Item, TemplateArg, TemplParam};
+use crate::cpp_ast::{Item, Lit, TemplateArg, TemplParam};
 
 pub struct MonomorphizeVisitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
@@ -153,9 +153,8 @@ impl<'b> CuToClMap for MonomorphizeVisitor<'b> {
 }
 
 fn map_exec(fun_ident: &cpp::Expr, template_args: &Vec<TemplateArg>, args: &Vec<cpp::Expr>, kernel_name: String) -> cpp::Expr {
-    // Args are:
     let kernel_args = &mut args.clone().into_iter().skip(2).collect();
-    let kernel_name_expr = cpp::Expr::Ident(kernel_name);
+    let kernel_name_expr = cpp::Expr::Lit(Lit::String(kernel_name));
     let kernel_raw_string_expr = cpp::Expr::Ident("kernel".to_string());
 
     let mut args_new = vec![args[0].clone(), kernel_name_expr, kernel_raw_string_expr];

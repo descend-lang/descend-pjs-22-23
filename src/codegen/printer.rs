@@ -241,6 +241,9 @@ impl std::fmt::Display for Lit {
                     write!(f, "{}", d)
                 }
             }
+            Lit::String(string) => {
+                write!(f, "\"{}\"", string)
+            }
         }
     }
 }
