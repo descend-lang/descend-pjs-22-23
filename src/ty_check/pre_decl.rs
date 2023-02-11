@@ -35,6 +35,7 @@ pub static TO_WARPS: &str = "to_warps";
 pub static SPLIT_THREAD_GRP: &str = "split_thread_grp";
 pub static SPLIT_WARP: &str = "split_warp";
 pub static SPLIT_WARP_GRP: &str = "split_warp_grp";
+pub static CREATE_ARRAY: &str = "create_array";
 
 pub fn fun_decls() -> Vec<(&'static str, Ty)> {
     let decls = [
@@ -69,6 +70,7 @@ pub fn fun_decls() -> Vec<(&'static str, Ty)> {
         (SPLIT_WARP_GRP, split_warp_grp_ty()),
         (SPLIT_THREAD_GRP, split_thread_grp_ty()),
         (SPLIT_WARP, split_warp_ty()),
+        (CREATE_ARRAY, create_array_ty()),
     ];
 
     decls.to_vec()
@@ -1074,4 +1076,28 @@ fn transpose_ty(own: Ownership) -> Ty {
             ))),
         ))))),
     ))
+}
+
+fn create_array_ty() -> Ty {
+    let n = Ident::new("n");
+    let d = Ident::new("d");
+    let n_nat = IdentKinded {
+        ident: n.clone(),
+        kind: Kind::Nat,
+    };
+    let d_dty = IdentKinded {
+        ident: d.clone(),
+        kind: Kind::DataTy,
+    };
+    Ty::new(
+        TyKind::Fn(
+            vec![n_nat, d_dty],
+            vec![Ty::new(TyKind::Data(DataTy::new(DataTyKind::Ident(d.clone()))))],
+            Exec::CpuThread,
+            Box::new(Ty::new(TyKind::Data(DataTy::new(DataTyKind::Array(
+                Box::new(DataTy::new(DataTyKind::Ident(d))),
+                Nat::Ident(n),
+            ))))),
+        )
+    )
 }

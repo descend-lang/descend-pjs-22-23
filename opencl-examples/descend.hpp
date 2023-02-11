@@ -28,9 +28,32 @@ namespace descend {
     using boolean = cl_char;
     // Todo: As per openCL Specification it is not allowed to pass bool to a kernel
 
-    template<typename T, std::size_t n>
-    using array = std::array<T, n>;
+    template<typename DescendType, size_t n>
+    class arr {
+    private:
+        std::array<DescendType,n>* content;
+    public:
+        static constexpr std::size_t size = sizeof(DescendType);
 
+        arr() {
+            this->content = new std::array<DescendType, n>;
+        };
+
+        ~arr(){
+            delete this->content;
+        }
+
+        auto operator&() -> DescendType * {
+            return this->content->data();
+        }
+
+        auto operator&() const -> const DescendType * {
+            return this->content->data();
+        }
+    };
+
+    template<typename DescendType, size_t n>
+    using array = std::array<DescendType, n>*;
 
     class Gpu {
     public:
@@ -42,10 +65,12 @@ namespace descend {
             this->device = device;
             this->context = context;
             this->queue = queue;
+            std::cout << "Created Gpu Device" << std::endl;
         }
-        /*~ Gpu () {
+        ~ Gpu () {
+            std::cout << "Destroying GPU Device" << std::endl;
             this->queue->finish();
-        }*/
+        }
     };
 
     enum Memory {
@@ -56,7 +81,7 @@ namespace descend {
     template<Memory mem, typename DescendType>
     class Buffer;
 
-    Gpu* gpu_device(std::size_t device_id) {
+    Gpu gpu_device(std::size_t device_id) {
 
         std::vector<cl::Platform> platforms;
         cl::Platform::get(&platforms);
@@ -81,7 +106,7 @@ namespace descend {
 
         std::cout << "Adresses (context, devices, queue)" << context <<  ", " << device << ", " << queue << std::endl;
 
-        return new Gpu (device, context, queue);
+        return Gpu(device, context, queue);
     };
 
 
@@ -92,9 +117,14 @@ namespace descend {
     public:
         static constexpr std::size_t size = sizeof(DescendType);
 
-        Buffer(const DescendType init_val) : ptr_{new DescendType(init_val)} {}
-        Buffer(const DescendType * const __restrict__ init_ptr) : ptr_{new DescendType(*init_ptr)} {}
+        Buffer(const DescendType init_val) : ptr_{new DescendType(init_val)} {
+            std::cout << "Creating Heap Buffer of size: " << size << std::endl;
+        }
+        Buffer(const DescendType * const __restrict__ init_ptr) : ptr_{new DescendType(*init_ptr)} {
+            std::cout << "Creating Heap Buffer of size: " << size << std::endl;
+        }
         ~Buffer() {
+            std::cout << "Destroying Heap Buffer of size: " << size << std::endl;
             delete ptr_;
         }
 
@@ -116,18 +146,22 @@ namespace descend {
         static constexpr std::size_t size = n * sizeof(DescendType);
 
         Buffer(const DescendType default_value): ptr_{new descend::array<DescendType, n>} {
+            std::cout << "Creating Heap Buffer of size: " << size << std::endl;
             std::fill(ptr_->begin(), ptr_->end(), default_value);
         }
 
         Buffer(const descend::array<DescendType, n> init) : ptr_{new descend::array<DescendType, n>} {
-            std::copy(init.begin(), init.end(), ptr_->data());
+            std::cout << "Creating Heap Buffer of size: " << size << std::endl;
+            std::copy(init->begin(), init->end(), ptr_->data());
         }
 
         Buffer(const DescendType * const __restrict__ init_ptr) : ptr_{new descend::array<DescendType, n>} {
+            std::cout << "Creating Heap Buffer of size: " << size << std::endl;
             std::copy(init_ptr, init_ptr + size, ptr_->data());
         }
 
         ~Buffer() {
+            std::cout << "Destroying Heap Buffer of size: " << size << std::endl;
             delete ptr_;
         }
 
@@ -154,14 +188,14 @@ namespace descend {
         Buffer(const Gpu* const __restrict__ gpu, const DescendType value) : gpu_{gpu} {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
-            std::cout << "size: " << size << std::endl;
+            std::cout << "Create GPU Buffer of size: " << size << std::endl;
             gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, *value);
         }
 
         Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
-            std::cout << "size: " << size << std::endl;
+            std::cout << "Create GPU Buffer of size: " << size << std::endl;
             gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
         }
 
@@ -171,7 +205,7 @@ namespace descend {
         }
 
         ~Buffer() {
-            std:: cout << "Destroying Buffer of size " << size << std::endl;
+            std:: cout << "Destroying GPU Buffer of size " << size << std::endl;
             delete buffer;
         }
     };
@@ -189,22 +223,22 @@ namespace descend {
             std::fill(init_ptr->begin(), init_ptr->end(), default_value);
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
-            std::cout << "size: " << size << std::endl;
+            std::cout << "Create GPU Buffer of size: " << size << std::endl;
             gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
         }
 
         Buffer(const Gpu* const __restrict__ gpu, const DescendType * const __restrict__ init_ptr) : gpu_{gpu} {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
-            std::cout << "size: " << size << std::endl;
+            std::cout << "Create GPU Buffer of size: " << size << std::endl;
             gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init_ptr);
         }
 
         Buffer(const Gpu* const __restrict__ gpu, const descend::array<DescendType, n> init) : gpu_{gpu} {
             buffer = new cl::Buffer(*gpu_->context, CL_MEM_WRITE_ONLY, size);
             // Copy Data to device
-            std::cout << "size: " << size << std::endl;
-            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init.data());
+            std::cout << "Create GPU Buffer of size: " << size << std::endl;
+            gpu_->queue->enqueueWriteBuffer(*buffer, CL_TRUE, 0, size, init->data());
         }
 
         template<typename PtrTypeHost>
@@ -213,7 +247,7 @@ namespace descend {
         }
 
         ~Buffer() {
-            std:: cout << "Destroying Buffer of size " << size << std::endl;
+            std:: cout << "Destroying GPU Buffer of size " << size << std::endl;
             delete buffer;
         }
     };
@@ -225,23 +259,23 @@ namespace descend {
     using GpuBuffer = Buffer<Memory::GpuGlobal, DescendType>;
 
     template<typename DescendType, typename PtrType>
-    GpuBuffer<DescendType>* gpu_alloc_copy(const Gpu * const __restrict__ gpu, const PtrType * const __restrict__ init_ptr) {
-        return new descend::GpuBuffer<DescendType>(gpu, init_ptr);
+    GpuBuffer<DescendType> gpu_alloc_copy(const Gpu * const __restrict__ gpu, const PtrType * const __restrict__ init_ptr) {
+        return descend::GpuBuffer<DescendType>(gpu, init_ptr);
     }
 
     template<typename DescendType, typename PtrTypeHost>
-    auto copy_to_host(const GpuBuffer<DescendType> device_buffer, PtrTypeHost * const __restrict__ host_ptr) -> void {
-        device_buffer.read_to_host(host_ptr);
+    auto copy_to_host(const GpuBuffer<DescendType>* device_buffer, PtrTypeHost * const __restrict__ host_ptr) -> void {
+        device_buffer->read_to_host(host_ptr);
     }
+
 
     //cl:Buffer aufruf als Pointer in Kernel als *pointer
     template<std::size_t num_work_groups, std::size_t local_size, typename ...Args>
-    void exec(const descend::Gpu * const gpu, const std::string KERNEL_SOURCE, GpuBuffer<Args>*... args) {
-
+    void exec(const descend::Gpu * const gpu, std::string kernel_name, std::string kernel, const GpuBuffer<Args>*... args) {
         //TODO: Build Program in own function
         //TODO: Define Global Error-Handler for OpenCL (int-code handling and Exception Handling)
         cl_int err;
-        cl::Program program(*gpu->context, KERNEL_SOURCE, false, &err);
+        cl::Program program(*gpu->context, kernel, false, &err);
         if (err != CL_SUCCESS) {
             throw std::runtime_error(getErrorString(err));
         }
@@ -249,7 +283,7 @@ namespace descend {
         try {
             program.build(*gpu->device);
 
-            cl::Kernel kernel(program, "__kernel__", &err);
+            cl::Kernel kernel(program, kernel_name.c_str(), &err);
             std::cout << "Created Kernel" << std::endl;
 
             cl_uint index = 0;
@@ -291,6 +325,11 @@ namespace descend {
                 std::cerr << getErrorString(e.err()) << std::endl;
             }
         }
+    }
+
+    template<std::size_t n, typename DescendType>
+    descend::array<DescendType, n> create_array() {
+        return new std::array<DescendType, n>();
     }
 }
 
