@@ -1,4 +1,6 @@
-use crate::cpp_ast::{BinOp, BufferKind, Item, Expr, ParamDecl, ScalarTy, Stmt, Ty, UnOp, TemplateArg};
+use crate::cpp_ast::{
+    BinOp, BufferKind, Expr, Item, ParamDecl, ScalarTy, Stmt, TemplateArg, Ty, UnOp,
+};
 use crate::cpp_ast::{GpuAddrSpace, Lit};
 use core::panic;
 use std::env;
@@ -85,7 +87,7 @@ trait OpenCLPrint {
 impl OpenCLPrint for Item {
     fn print_cl(&self, gpu_fun: bool) -> String {
         match self {
-            Item::Include (content) => format!("#include \"{content}\"\n"),
+            Item::Include(content) => format!("#include \"{content}\"\n"),
             Item::FunDef {
                 name,
                 templ_params,
@@ -101,20 +103,20 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name.contains("__kernel") {
-                    let res = write!(&mut s, "__kernel void {} (", name );
+                    let res = write!(&mut s, "__kernel void {} (", name);
                     if res.is_err() {
                         panic!("{:?}", res);
                     }
                 } else {
-                    write!(&mut s, "{} {} (",ret_ty.print_cl(is_dev_fun.clone()), name);
+                    write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
                 }
                 if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
-                    write!(&mut s, "{}", p);
+                    write!(&mut s, "{}", p).unwrap();
                 }
 
-                writeln!(&mut s, ") {{");
-                writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone()));
-                writeln!(&mut s, "}}");
+                writeln!(&mut s, ") {{").unwrap();
+                writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone())).unwrap();
+                writeln!(&mut s, "}}").unwrap();
                 s
             }
         }
@@ -122,8 +124,8 @@ impl OpenCLPrint for Item {
 }
 impl OpenCLPrint for Stmt {
     fn print_cl(&self, is_dev_fun: bool) -> String {
-        use Stmt::*;
         use std::fmt::Write;
+        use Stmt::*;
 
         let mut s = String::new();
         match self {
@@ -132,57 +134,58 @@ impl OpenCLPrint for Stmt {
                 name,
                 ty,
                 addr_space,
-                expr
+                expr,
             } => {
                 if let Some(addrs) = addr_space {
                     let res = write!(&mut s, "{} ", addrs.print_cl(is_dev_fun));
                 }
                 s.push_str(format!("{} {}", ty.print_cl(is_dev_fun), name).as_str());
                 if let Ty::CArray(_, n) = ty {
-                    write!(&mut s, "[{n}]");
+                    write!(&mut s, "[{n}]").unwrap();
                 }
                 if let Some(expr) = expr {
-                    write!(&mut s, " = {}", expr);
+                    write!(&mut s, " = {}", expr).unwrap();
                 }
-                write!(&mut s, ";");
+                write!(&mut s, ";").unwrap();
                 s
-            },
+            }
             Block(stmt) => format!("{{\n {} \n}}", stmt.print_cl(is_dev_fun)),
             Seq(stmt) => {
                 let (last, leading) = stmt.split_last().unwrap();
                 for stmt in leading {
-                    write!(&mut s, "{}", stmt.print_cl(is_dev_fun));
+                    write!(&mut s, "{}", stmt.print_cl(is_dev_fun)).unwrap();
                 }
-                write!(&mut s, "{}", last.print_cl(is_dev_fun));
+                write!(&mut s, "{}", last.print_cl(is_dev_fun)).unwrap();
                 s
-            },
+            }
             Expr(expr) => {
                 if let crate::cpp_ast::Expr::Empty = expr {
                     String::new()
                 } else {
                     format!("{};", expr.print_cl(is_dev_fun))
                 }
-            },
+            }
             If { cond, body } => {
-                writeln!(&mut s, "if ({})", cond.print_cl(is_dev_fun));
-                write!(&mut s, "{}", body.print_cl(is_dev_fun));
+                writeln!(&mut s, "if ({})", cond.print_cl(is_dev_fun)).unwrap();
+                write!(&mut s, "{}", body.print_cl(is_dev_fun)).unwrap();
                 s
-            },
+            }
             IfElse {
                 cond,
                 true_body,
                 false_body,
             } => {
                 // s.push_str(format!("if ({})", cond.print_cl(is_dev_fun)).as_str());
-                writeln!(&mut s, "if ({})", cond.print_cl(is_dev_fun));
+                writeln!(&mut s, "if ({})", cond.print_cl(is_dev_fun)).unwrap();
                 write!(
                     &mut s,
                     "{} else {}",
                     true_body.print_cl(is_dev_fun),
                     false_body.print_cl(is_dev_fun)
-                );
+                )
+                .unwrap();
                 s
-            },
+            }
             While { cond, stmt } => format!(
                 "while ({}) {}",
                 cond.print_cl(is_dev_fun),
@@ -201,94 +204,101 @@ impl OpenCLPrint for Stmt {
                     iter.print_cl(is_dev_fun),
                     stmt.print_cl(is_dev_fun)
                 )
-            },
+            }
             Label(l) => format!("{}:", l),
             Return(expr) => {
-                write!(&mut s, "return");
+                write!(&mut s, "return").unwrap();
                 if let Some(e) = expr {
-                    write!(&mut s, " {}", e.print_cl(is_dev_fun));
+                    write!(&mut s, " {}", e.print_cl(is_dev_fun)).unwrap();
                 }
-                writeln!(&mut s, ";");
+                writeln!(&mut s, ";").unwrap();
                 s
             }
         }
-
     }
 }
 
 impl OpenCLPrint for TemplateArg {
     fn print_cl(&self, is_dev_fun: bool) -> String {
         match self {
-            TemplateArg::Expr(expr) => {format!("{expr}")}
-            TemplateArg::Ty(ty) => {format!("{ty}")}
+            TemplateArg::Expr(expr) => {
+                format!("{expr}")
+            }
+            TemplateArg::Ty(ty) => {
+                format!("{ty}")
+            }
         }
     }
 }
 
 impl OpenCLPrint for Expr {
     fn print_cl(&self, is_dev_fun: bool) -> String {
-        use Expr::*;
         use std::fmt::Write;
+        use Expr::*;
         let mut s = String::new();
 
-        match  self {
+        match self {
             Empty => s,
             Ident(name) => format!("{name}"),
             Lit(l) => format!("{l}"),
             Assign {
                 lhs: l_val,
-                rhs: r_val
-            } => format!("{} = {}", l_val.print_cl(is_dev_fun), r_val.print_cl(is_dev_fun)),
-            Lambda {..} => panic!("There are not lamba functions in OpenCL"),
+                rhs: r_val,
+            } => format!(
+                "{} = {}",
+                l_val.print_cl(is_dev_fun),
+                r_val.print_cl(is_dev_fun)
+            ),
+            Lambda { .. } => panic!("There are not lamba functions in OpenCL"),
             FunCall {
                 fun,
                 template_args,
                 args,
             } => {
-                write!(&mut s, "{}", fun.print_cl(is_dev_fun).as_str());
+                write!(&mut s, "{}", fun.print_cl(is_dev_fun).as_str()).unwrap();
                 if !template_args.is_empty() {
-                    write!(&mut s, "<");
+                    write!(&mut s, "<").unwrap();
                     if let Some(a) = fmt_vec(template_args, ", ", is_dev_fun) {
-                        write!(&mut s, "{a}");
+                        write!(&mut s, "{a}").unwrap();
                     }
-                    write!(&mut s, ">");
+                    write!(&mut s, ">").unwrap();
                 }
-                write!(&mut s, "(");
+                write!(&mut s, "(").unwrap();
                 if let Some(a) = fmt_vec(args, ", ", is_dev_fun) {
-                    write!(&mut s, "{a}");
+                    write!(&mut s, "{a}").unwrap();
                 }
-                write!(&mut s, ")");
+                write!(&mut s, ")").unwrap();
                 s
-            },
+            }
             UnOp { op, arg } => format!("{}{}", op.print_cl(is_dev_fun), arg.print_cl(is_dev_fun)),
-            BinOp { op, lhs, rhs }
-            => format!(
+            BinOp { op, lhs, rhs } => format!(
                 "{} {} {}",
                 lhs.print_cl(is_dev_fun),
                 op.print_cl(is_dev_fun),
                 rhs.print_cl(is_dev_fun)
             ),
             ArraySubscript { array, index } => format!("{}[{}]", array.print_cl(is_dev_fun), index),
-            Proj { tuple, n } => format!( "{}.{}", tuple.print_cl(is_dev_fun), n),
+            Proj { tuple, n } => format!("{}.{}", tuple.print_cl(is_dev_fun), n),
             InitializerList { elems } => {
-                write!(&mut s, "{{");
+                write!(&mut s, "{{").unwrap();
                 if let Some(e) = fmt_vec(elems, ", ", is_dev_fun) {
-                    write!(&mut s, "{e}");
+                    write!(&mut s, "{e}").unwrap();
                 }
-                write!(&mut s, "}}");
+                write!(&mut s, "}}").unwrap();
                 s
-            },
+            }
             Ref(expr) => format!("(&{})", expr.print_cl(is_dev_fun)),
             Deref(expr) => format!("(*{})", expr.print_cl(is_dev_fun)),
-            Tuple(elems) => { // TODO! only on host code
-                write!(&mut s, "descend::tuple{{");
+            Tuple(elems) => {
+                // TODO! only on host code
+                write!(&mut s, "descend::tuple{{").unwrap();
                 if let Some(e) = fmt_vec(elems, ", ", is_dev_fun) {
-                    write!(&mut s, "{e}");
+                    write!(&mut s, "{e}").unwrap();
                 }
-                write!(&mut s, "}}");
+                write!(&mut s, "}}").unwrap();
                 s
-            },
-            Nat(n) => format!("{n}")
+            }
+            Nat(n) => format!("{n}"),
         }
     }
 }
@@ -300,12 +310,12 @@ impl OpenCLPrint for Lit {
         match self {
             Bool(val) => {
                 if is_dev_fun {
-                    let v = if *val {"1"} else {"0"};
+                    let v = if *val { "1" } else { "0" };
                     format!("{v}")
                 } else {
                     format!("{val}")
                 }
-            }// format!("{}", val), // TODO? print 0 or 1 on GPU depending on value?
+            } // format!("{}", val), // TODO? print 0 or 1 on GPU depending on value?
             I32(val) => format!("{}", val),
             U32(val) => format!("{}", val),
             F32(f) => {
@@ -321,7 +331,7 @@ impl OpenCLPrint for Lit {
                 } else {
                     format!("{d}")
                 }
-            },
+            }
             String(string) => {
                 format!("\"{}\"", string)
             }
@@ -331,11 +341,7 @@ impl OpenCLPrint for Lit {
 
 impl OpenCLPrint for ParamDecl {
     fn print_cl(&self, is_dev_fun: bool) -> String {
-        format!(
-            "{} {}",
-            self.ty.print_cl(is_dev_fun),
-            self.name
-        )
+        format!("{} {}", self.ty.print_cl(is_dev_fun), self.name)
     }
 }
 
@@ -343,7 +349,7 @@ impl OpenCLPrint for UnOp {
     fn print_cl(&self, is_dev_fun: bool) -> String {
         match self {
             Self::Not => String::from("!"),
-            Self::Neg => String::from("-")
+            Self::Neg => String::from("-"),
         }
     }
 }
@@ -363,7 +369,7 @@ impl OpenCLPrint for BinOp {
             Self::Le => "<=",
             Self::Gt => ">",
             Self::Ge => ">=",
-            Self::Neq => "!="
+            Self::Neq => "!=",
         };
         String::from(str)
     }
@@ -371,19 +377,18 @@ impl OpenCLPrint for BinOp {
 
 impl OpenCLPrint for GpuAddrSpace {
     fn print_cl(&self, is_dev_fun: bool) -> String {
-        use GpuAddrSpace::*;
         match self {
-            Global => String::new(),
-            Local => String::from("__local"),
-            Constant => String::from("__constant")
+            GpuAddrSpace::Global => String::new(),
+            GpuAddrSpace::Shared => String::from("__local"),
+            GpuAddrSpace::Constant => String::from("__constant"),
         }
     }
 }
 
 impl OpenCLPrint for Ty {
     fn print_cl(&self, is_dev_fun: bool) -> String {
-        use Ty::*;
         use std::fmt::Write;
+        use Ty::*;
         match self {
             Ptr(ty, Some(addr_space)) => format!(
                 "{}, {} *",
@@ -391,7 +396,11 @@ impl OpenCLPrint for Ty {
                 ty.print_cl(is_dev_fun)
             ),
             Ptr(ty, None) => format!("{} *", ty.print_cl(is_dev_fun)),
-            PtrConst(ty, Some(addr_space)) => format!("{} const {} *", addr_space.print_cl(is_dev_fun), ty.print_cl(is_dev_fun)),
+            PtrConst(ty, Some(addr_space)) => format!(
+                "{} const {} *",
+                addr_space.print_cl(is_dev_fun),
+                ty.print_cl(is_dev_fun)
+            ),
             PtrConst(ty, None) => format!("const {} *", ty.print_cl(is_dev_fun)),
             Const(ty) => match ty.as_ref() {
                 Ptr(_, _) => format!("{} const", ty.print_cl(is_dev_fun)),
@@ -402,17 +411,17 @@ impl OpenCLPrint for Ty {
             CArray(ty, _) => format!("{}", ty.print_cl(is_dev_fun)),
             Tuple(tys) => {
                 let mut s = String::new();
-                write!(&mut s, "descend::tuple<");
+                write!(&mut s, "descend::tuple<").unwrap();
                 if let Some(t) = fmt_vec(tys, ", ", is_dev_fun) {
-                    write!(&mut s, "{t}");
+                    write!(&mut s, "{t}").unwrap();
                 }
-                write!(&mut s, ">");
+                write!(&mut s, ">").unwrap();
                 s
-            },
+            }
             Buffer(ty, buff_kind) => match buff_kind {
                 BufferKind::CpuMem => format!("descend::HeapBuffer<{}>", ty.print_cl(is_dev_fun)),
                 BufferKind::GpuGlobal => format!("descend::GpuBuffer<{}>", ty.print_cl(is_dev_fun)),
-                BufferKind::Ident(name) => format!("{}", name)
+                BufferKind::Ident(name) => format!("{}", name),
             },
             Scalar(sty) => format!("{}", sty.print_cl(is_dev_fun)),
             Atomic(at) => format!("descend::Atomic<{}>", at.print_cl(is_dev_fun)),
@@ -434,7 +443,7 @@ impl OpenCLPrint for ScalarTy {
                 } else {
                     format!("descend::i32")
                 }
-            }, // format!("descend::i32"),
+            } // format!("descend::i32"),
             U32 => {
                 if is_dev_fun {
                     format!("unsigned int")
@@ -448,7 +457,7 @@ impl OpenCLPrint for ScalarTy {
                 } else {
                     format!("descend::f32")
                 }
-            }, // format!("descend::f32"),
+            } // format!("descend::f32"),
             F64 => {
                 if is_dev_fun {
                     format!("double")
@@ -463,7 +472,7 @@ impl OpenCLPrint for ScalarTy {
                 } else {
                     format!("descend::bool")
                 }
-            }, //  format!("bool"),
+            } //  format!("bool"),
             Memory => format!("descend::Memory"),
             Gpu => format!("descend::Gpu"),
         }
@@ -475,9 +484,9 @@ fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> 
     if let Some((last, leading)) = v.split_last() {
         let mut s = String::new();
         for p in leading {
-            write!(&mut s, "{}{}", p.print_cl(gpu_fun), sep);
+            write!(&mut s, "{}{}", p.print_cl(gpu_fun), sep).unwrap();
         }
-        write!(&mut s, "{}", last.print_cl(gpu_fun));
+        write!(&mut s, "{}", last.print_cl(gpu_fun)).unwrap();
         Some(s)
     } else {
         None
@@ -488,37 +497,33 @@ fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> 
 fn test_print_program() -> std::fmt::Result {
     use Ty::*;
 
-    let include_header = Item::Include(
-        "descend.hpp".to_string()
-    );
+    let include_header = Item::Include("descend.hpp".to_string());
 
-    let cpu_program = vec![
-        Item::FunDef {
-            name: "test_host_fun".to_string(),
-            templ_params: vec![],
-            params: vec![
-                ParamDecl {
-                    name: "a".to_string(),
-                    ty: Const(Box::new(PtrConst(
-                        Box::new(Scalar(ScalarTy::I32)),
-                        Some(GpuAddrSpace::Shared),
-                    ))),
-                },
-                ParamDecl {
-                    name: "b".to_string(),
-                    ty: Ptr(Box::new(Scalar(ScalarTy::Bool)), None),
-                },
-            ],
-            ret_ty: Scalar(ScalarTy::Void),
-            body: Stmt::VarDecl {
-                name: "a_f".to_string(),
-                ty: Ty::Scalar(ScalarTy::Auto),
-                addr_space: None,
-                expr: Some(Expr::Ident("a".to_string())),
+    let cpu_program = vec![Item::FunDef {
+        name: "test_host_fun".to_string(),
+        templ_params: vec![],
+        params: vec![
+            ParamDecl {
+                name: "a".to_string(),
+                ty: Const(Box::new(PtrConst(
+                    Box::new(Scalar(ScalarTy::I32)),
+                    Some(GpuAddrSpace::Shared),
+                ))),
             },
-            is_dev_fun: false,
+            ParamDecl {
+                name: "b".to_string(),
+                ty: Ptr(Box::new(Scalar(ScalarTy::Bool)), None),
+            },
+        ],
+        ret_ty: Scalar(ScalarTy::Void),
+        body: Stmt::VarDecl {
+            name: "a_f".to_string(),
+            ty: Ty::Scalar(ScalarTy::Auto),
+            addr_space: None,
+            expr: Some(Expr::Ident("a".to_string())),
         },
-    ];
+        is_dev_fun: false,
+    }];
 
     let gpu_program = vec![
         Item::FunDef {
@@ -552,10 +557,7 @@ fn test_print_program() -> std::fmt::Result {
             params: vec![
                 ParamDecl {
                     name: "a".to_string(),
-                    ty: Const(Box::new(PtrConst(
-                        Box::new(Scalar(ScalarTy::I32)),
-                        None
-                    ))),
+                    ty: Const(Box::new(PtrConst(Box::new(Scalar(ScalarTy::I32)), None))),
                 },
                 ParamDecl {
                     name: "b".to_string(),
@@ -577,3 +579,4 @@ fn test_print_program() -> std::fmt::Result {
     print!("{}", code);
     Ok(())
 }
+
