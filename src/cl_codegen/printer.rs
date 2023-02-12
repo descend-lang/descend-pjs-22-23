@@ -34,7 +34,7 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
 
     kernel_program = clang_format(&kernel_program);
 
-    let res = writeln!(&mut code, "{}", kernel_program);
+    let res = writeln!(&mut code, "{kernel_program}");
     if res.is_err() {
         panic!("{:?}", res);
     }
@@ -103,19 +103,19 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name.contains("__kernel") {
-                    let res = write!(&mut s, "__kernel void {} (", name);
+                    let res = write!(&mut s, "__kernel void {name} (");
                     if res.is_err() {
                         panic!("{:?}", res);
                     }
                 } else {
-                    write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
+                    write!(&mut s, "{} {name} (", ret_ty.print_cl(*is_dev_fun)).unwrap();
                 }
-                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone(), name.contains("__kernel")) {
-                    write!(&mut s, "{}", p).unwrap();
+                if let Some(p) = fmt_vec(params, ", ", *is_dev_fun, name.contains("__kernel")) {
+                    write!(&mut s, "{p}").unwrap();
                 }
 
                 writeln!(&mut s, ") {{").unwrap();
-                writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone())).unwrap();
+                writeln!(&mut s, "{}", body.print_cl(*is_dev_fun)).unwrap();
                 writeln!(&mut s, "}}").unwrap();
                 s
             }
@@ -137,14 +137,14 @@ impl OpenCLPrint for Stmt {
                 expr,
             } => {
                 if let Some(addrs) = addr_space {
-                    let res = write!(&mut s, "{} ", addrs.print_cl(is_dev_fun));
+                    write!(&mut s, "{} ", addrs.print_cl(is_dev_fun)).unwrap();
                 }
                 s.push_str(format!("{} {}", ty.print_cl(is_dev_fun), name).as_str());
                 if let Ty::CArray(_, n) = ty {
                     write!(&mut s, "[{n}]").unwrap();
                 }
                 if let Some(expr) = expr {
-                    write!(&mut s, " = {}", expr).unwrap();
+                    write!(&mut s, " = {expr}").unwrap();
                 }
                 write!(&mut s, ";").unwrap();
                 s
@@ -205,7 +205,7 @@ impl OpenCLPrint for Stmt {
                     stmt.print_cl(is_dev_fun)
                 )
             }
-            Label(l) => format!("{}:", l),
+            Label(l) => format!("{l}:"),
             Return(expr) => {
                 write!(&mut s, "return").unwrap();
                 if let Some(e) = expr {
@@ -239,8 +239,8 @@ impl OpenCLPrint for Expr {
 
         match self {
             Empty => s,
-            Ident(name) => format!("{name}"),
-            Lit(l) => format!("{l}"),
+            Ident(name) => name.to_string(),
+            Lit(l) => l.to_string(),
             Assign {
                 lhs: l_val,
                 rhs: r_val,
@@ -311,13 +311,13 @@ impl OpenCLPrint for Lit {
             Bool(val) => {
                 if is_dev_fun {
                     let v = if *val { "1" } else { "0" };
-                    format!("{v}")
+                    v.to_string()
                 } else {
                     format!("{val}")
                 }
-            } // format!("{}", val), // TODO? print 0 or 1 on GPU depending on value?
-            I32(val) => format!("{}", val),
-            U32(val) => format!("{}", val),
+            } // TODO? print 0 or 1 on GPU depending on value?
+            I32(val) => val.to_string(),
+            U32(val) => val.to_string(),
             F32(f) => {
                 if &f.ceil() == f {
                     format!("{f}.0f")
@@ -333,7 +333,7 @@ impl OpenCLPrint for Lit {
                 }
             }
             String(string) => {
-                format!("\"{}\"", string)
+                format!("\"{string}\"")
             }
         }
     }
@@ -408,7 +408,7 @@ impl OpenCLPrint for Ty {
                 _ => format!("const {}", ty.print_cl(is_dev_fun)),
             },
             Array(ty, size) => format!("descend::array<{}, {}>", ty.print_cl(is_dev_fun), size),
-            CArray(ty, _) => format!("{}", ty.print_cl(is_dev_fun)),
+            CArray(ty, _) => ty.print_cl(is_dev_fun),
             Tuple(tys) => {
                 let mut s = String::new();
                 write!(&mut s, "descend::tuple<").unwrap();
@@ -421,11 +421,11 @@ impl OpenCLPrint for Ty {
             Buffer(ty, buff_kind) => match buff_kind {
                 BufferKind::CpuMem => format!("descend::HeapBuffer<{}>", ty.print_cl(is_dev_fun)),
                 BufferKind::GpuGlobal => format!("descend::GpuBuffer<{}>", ty.print_cl(is_dev_fun)),
-                BufferKind::Ident(name) => format!("{}", name),
+                BufferKind::Ident(name) => name.to_string(),
             },
-            Scalar(sty) => format!("{}", sty.print_cl(is_dev_fun)),
+            Scalar(sty) => sty.print_cl(is_dev_fun),
             Atomic(at) => format!("descend::Atomic<{}>", at.print_cl(is_dev_fun)),
-            Ident(name) => format!("{}", name),
+            Ident(name) => name.to_string(),
         }
     }
 }
@@ -435,51 +435,57 @@ impl OpenCLPrint for ScalarTy {
         use ScalarTy::*;
 
         match self {
-            Auto => format!("auto"),
-            Void => format!("void"),
+            Auto => "auto",
+            Void => "void",
             I32 => {
                 if is_dev_fun {
-                    format!("int")
+                    "int"
                 } else {
-                    format!("descend::i32")
+                    "descend::i32"
                 }
             } // format!("descend::i32"),
             U32 => {
                 if is_dev_fun {
-                    format!("unsigned int")
+                    "unsigned int"
                 } else {
-                    format!("descend::u32")
+                    "descend::u32"
                 }
             } // format!("descend::u32"),
             F32 => {
                 if is_dev_fun {
-                    format!("float")
+                    "float"
                 } else {
-                    format!("descend::f32")
+                    "descend::f32"
                 }
             } // format!("descend::f32"),
             F64 => {
                 if is_dev_fun {
-                    format!("double")
+                    "double"
                 } else {
-                    format!("descend::f64")
+                    "descend::f64"
                 }
             } // format!("descend::f64"),
-            SizeT => format!("size_t"),
+            SizeT => "size_t",
             Bool => {
                 if is_dev_fun {
-                    format!("char")
+                    "char"
                 } else {
-                    format!("descend::bool")
+                    "descend::bool"
                 }
             } //  format!("bool"),
-            Memory => format!("descend::Memory"),
-            Gpu => format!("descend::Gpu"),
+            Memory => "descend::Memory",
+            Gpu => "descend::Gpu",
         }
+        .to_string()
     }
 }
 
-fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool, kernel_header: bool) -> Option<String> {
+fn fmt_vec<D: OpenCLPrint>(
+    v: &[D],
+    sep: &str,
+    gpu_fun: bool,
+    kernel_header: bool,
+) -> Option<String> {
     use std::fmt::Write;
     if let Some((last, leading)) = v.split_last() {
         let mut s = String::new();
@@ -583,7 +589,7 @@ fn test_print_program() -> std::fmt::Result {
     ];
 
     let code = print(&include_header, &cpu_program, &gpu_program);
-    print!("{}", code);
+    print!("{code}");
     Ok(())
 }
 
