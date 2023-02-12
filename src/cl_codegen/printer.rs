@@ -110,7 +110,7 @@ impl OpenCLPrint for Item {
                 } else {
                     write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
                 }
-                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
+                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone(), name.contains("__kernel")) {
                     write!(&mut s, "{}", p).unwrap();
                 }
 
@@ -258,13 +258,13 @@ impl OpenCLPrint for Expr {
                 write!(&mut s, "{}", fun.print_cl(is_dev_fun).as_str()).unwrap();
                 if !template_args.is_empty() {
                     write!(&mut s, "<").unwrap();
-                    if let Some(a) = fmt_vec(template_args, ", ", is_dev_fun) {
+                    if let Some(a) = fmt_vec(template_args, ", ", is_dev_fun, false) {
                         write!(&mut s, "{a}").unwrap();
                     }
                     write!(&mut s, ">").unwrap();
                 }
                 write!(&mut s, "(").unwrap();
-                if let Some(a) = fmt_vec(args, ", ", is_dev_fun) {
+                if let Some(a) = fmt_vec(args, ", ", is_dev_fun, false) {
                     write!(&mut s, "{a}").unwrap();
                 }
                 write!(&mut s, ")").unwrap();
@@ -281,7 +281,7 @@ impl OpenCLPrint for Expr {
             Proj { tuple, n } => format!("{}.{}", tuple.print_cl(is_dev_fun), n),
             InitializerList { elems } => {
                 write!(&mut s, "{{").unwrap();
-                if let Some(e) = fmt_vec(elems, ", ", is_dev_fun) {
+                if let Some(e) = fmt_vec(elems, ", ", is_dev_fun, false) {
                     write!(&mut s, "{e}").unwrap();
                 }
                 write!(&mut s, "}}").unwrap();
@@ -292,7 +292,7 @@ impl OpenCLPrint for Expr {
             Tuple(elems) => {
                 // TODO! only on host code
                 write!(&mut s, "descend::tuple{{").unwrap();
-                if let Some(e) = fmt_vec(elems, ", ", is_dev_fun) {
+                if let Some(e) = fmt_vec(elems, ", ", is_dev_fun, false) {
                     write!(&mut s, "{e}").unwrap();
                 }
                 write!(&mut s, "}}").unwrap();
@@ -412,7 +412,7 @@ impl OpenCLPrint for Ty {
             Tuple(tys) => {
                 let mut s = String::new();
                 write!(&mut s, "descend::tuple<").unwrap();
-                if let Some(t) = fmt_vec(tys, ", ", is_dev_fun) {
+                if let Some(t) = fmt_vec(tys, ", ", is_dev_fun, false) {
                     write!(&mut s, "{t}").unwrap();
                 }
                 write!(&mut s, ">").unwrap();
@@ -479,14 +479,21 @@ impl OpenCLPrint for ScalarTy {
     }
 }
 
-fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> {
+fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool, kernel_header: bool) -> Option<String> {
     use std::fmt::Write;
     if let Some((last, leading)) = v.split_last() {
         let mut s = String::new();
+        let prefix = {
+            if kernel_header {
+                "__global "
+            } else {
+                ""
+            }
+        };
         for p in leading {
-            write!(&mut s, "{}{}", p.print_cl(gpu_fun), sep).unwrap();
+            write!(&mut s, "{prefix}{}{}", p.print_cl(gpu_fun), sep).unwrap();
         }
-        write!(&mut s, "{}", last.print_cl(gpu_fun)).unwrap();
+        write!(&mut s, "{prefix}{}", last.print_cl(gpu_fun)).unwrap();
         Some(s)
     } else {
         None
