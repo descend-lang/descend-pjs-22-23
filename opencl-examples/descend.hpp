@@ -103,7 +103,7 @@ namespace descend {
         string device_extensions;
         device->getInfo(CL_DEVICE_EXTENSIONS, &device_extensions);
         if (!device_extensions.find("cl_khr_fp64")) {
-            hrow std::runtime_error("fp64 extension not installed");
+            throw std::runtime_error("fp64 extension not installed");
         }
 
         cl_int err;
