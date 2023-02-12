@@ -96,6 +96,16 @@ namespace descend {
 
         const auto device = new cl::Device(devices[device_id]);
 
+        /* Check if cl_khr_fp64 (Khronos official double precision floating point precision extension)
+          * is listed under extensions.
+          * For AMD, maybe check for cl_amd_fp64
+         */
+        string device_extensions;
+        device->getInfo(CL_DEVICE_EXTENSIONS, &device_extensions);
+        if (!device_extensions.find("cl_khr_fp64")) {
+            hrow std::runtime_error("fp64 extension not installed");
+        }
+
         cl_int err;
         // Create command queue for first device
         const auto queue = new cl::CommandQueue(*context, *device, 0, &err);
