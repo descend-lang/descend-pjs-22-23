@@ -985,10 +985,10 @@ fn par_idx_and_sync_stmt(th_hy: &desc::ThreadHierchyTy) -> (desc::Nat, Option<cu
     //  The same things exists in ty_check where only threadHierchyTy for elem types is returned
     match th_hy {
         desc::ThreadHierchyTy::BlockGrp(_, _, _, m1, m2, m3) => {
-            (desc::Nat::Ident(desc::Ident::new("blockIdx.x")), None)
+            (desc::Nat::Ident(desc::Ident::new("get_group_id(0)")), None)
         }
         desc::ThreadHierchyTy::ThreadGrp(_, _, _) => (
-            desc::Nat::Ident(desc::Ident::new("threadIdx.x")),
+            desc::Nat::Ident(desc::Ident::new("get_local_id(0)")),
             Some(cu::Stmt::Expr(cu::Expr::FunCall {
                 fun: Box::new(cu::Expr::Ident("barrier".to_string())),
                 template_args: vec![],
