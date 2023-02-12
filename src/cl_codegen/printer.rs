@@ -103,20 +103,19 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name.contains("__kernel") {
-                    let res = write!(&mut s, "__kernel void {} (", name);
+                    let res = write!(&mut s, "__kernel ");
                     if res.is_err() {
                         panic!("{:?}", res);
                     }
-                } else {
-                    write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
                 }
+                write!(&mut s, "{} {} ", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
                 if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
-                    write!(&mut s, "{}", p).unwrap();
+                    write!(&mut s, "({})", p).unwrap();
+                } else {
+                    write!(&mut s, "()").unwrap();
                 }
 
-                writeln!(&mut s, ") {{").unwrap();
                 writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone())).unwrap();
-                writeln!(&mut s, "}}").unwrap();
                 s
             }
         }
@@ -479,6 +478,7 @@ impl OpenCLPrint for ScalarTy {
     }
 }
 
+// Todo: Evaluate if returning in empty string is better than Option. Could save us many match constructs
 fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> {
     use std::fmt::Write;
     if let Some((last, leading)) = v.split_last() {
