@@ -101,20 +101,20 @@ impl OpenCLPrint for Item {
                     panic!("There are no template parameters in OpenCL");
                 }
                 if name.contains("__kernel") {
-                    let res = write!(&mut s, "__kernel void {} (", name );
+                    let res = write!(&mut s, "__kernel ");
                     if res.is_err() {
                         panic!("{:?}", res);
                     }
-                } else {
-                    write!(&mut s, "{} {} (",ret_ty.print_cl(is_dev_fun.clone()), name);
                 }
-                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
-                    write!(&mut s, "{}", p);
-                }
+                write!(&mut s, "{} {}",ret_ty.print_cl(is_dev_fun.clone()), name);
 
-                writeln!(&mut s, ") {{");
+                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
+                    write!(&mut s, "({})", p);
+                } else {
+                    write!(&mut s, "()");
+                }
+                // Function Definition does not print braces, since body has to be a block, which already prints braces
                 writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone()));
-                writeln!(&mut s, "}}");
                 s
             }
         }
