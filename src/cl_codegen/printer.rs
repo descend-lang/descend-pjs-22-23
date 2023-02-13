@@ -376,7 +376,7 @@ impl OpenCLPrint for BinOp {
 impl OpenCLPrint for GpuAddrSpace {
     fn print_cl(&self, is_dev_fun: bool) -> String {
         match self {
-            GpuAddrSpace::Global => String::new(),
+            GpuAddrSpace::Global => String::from("__global"),
             GpuAddrSpace::Shared => String::from("__local"),
             GpuAddrSpace::Constant => String::from("__constant"),
         }
@@ -389,7 +389,7 @@ impl OpenCLPrint for Ty {
         use Ty::*;
         match self {
             Ptr(ty, Some(addr_space)) => format!(
-                "{}, {} *",
+                "{} {} *",
                 addr_space.print_cl(is_dev_fun),
                 ty.print_cl(is_dev_fun)
             ),
