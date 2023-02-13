@@ -85,7 +85,7 @@ impl OpenCLPrint for Item {
             } => {
                 use std::fmt::Write;
                 let mut s = print_function_declaration(name, templ_params, params, ret_ty, is_dev_fun);
-                writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone())).unwrap();
+                writeln!(&mut s, "{}", body.print_cl(*is_dev_fun)).unwrap();
                 s
             }
         }
@@ -110,8 +110,8 @@ fn print_function_declaration(name: &String, templ_params: &Vec<TemplParam>, par
     if name.contains("__kernel") {
         write!(&mut s, "__kernel ").unwrap();
     }
-    write!(&mut s, "{} {} ", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
-    if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
+    write!(&mut s, "{} {} ", ret_ty.print_cl(*is_dev_fun), name).unwrap();
+    if let Some(p) = fmt_vec(params, ", ", *is_dev_fun) {
         write!(&mut s, "({})", p).unwrap();
     } else {
         write!(&mut s, "()").unwrap();
