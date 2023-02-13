@@ -108,10 +108,7 @@ fn print_function_declaration(name: &String, templ_params: &Vec<TemplParam>, par
         panic!("There are no template parameters in OpenCL");
     }
     if name.contains("__kernel") {
-        let res = write!(&mut s, "__kernel ");
-        if res.is_err() {
-            panic!("{:?}", res);
-        }
+        write!(&mut s, "__kernel ").unwrap();
     }
     write!(&mut s, "{} {} ", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
     if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
