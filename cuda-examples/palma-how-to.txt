@@ -1,0 +1,5 @@
+module load palma/2021a
+module load CUDA
+module load foss/2021a
+
+nvcc vector-add.cu -o test --extended-lambda

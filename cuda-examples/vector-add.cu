@@ -19,11 +19,11 @@ auto inplace_vector_add(
 
 
 auto main() -> int {
-    auto ha_array = descend::HeapBuffer<descend::array<descend::i32, 1*1024>>(descend::create_array<1024, descend::i32>(0));
-    const auto hb_array = descend::HeapBuffer<descend::array<descend::i32, 1*1024>>(descend::create_array<1024, descend::i32>(1));
-    inplace_vector_add<1*1024>(&ha_array, &hb_array);
+    auto ha_array = descend::HeapBuffer<descend::array<descend::i32, 64*1024>>(descend::create_array<1024, descend::i32>(0));
+    const auto hb_array = descend::HeapBuffer<descend::array<descend::i32, 64*1024>>(descend::create_array<1024, descend::i32>(1));
+    inplace_vector_add<64*1024>(&ha_array, &hb_array);
 
-    for (size_t i = 0; i < 1*1024; i++) {
+    for (size_t i = 0; i < 64*1024; i++) {
         if (ha_array[i] != 1) {
             std::cout << "At i = " << i << "Wrong number. Found " << ha_array[i] << " instead of 1.";
             exit(EXIT_FAILURE);
