@@ -1,3 +1,4 @@
+use crate::ast::{Ident, Nat};
 use crate::cpp_ast as cpp;
 use crate::cpp_ast::{TemplateArg, TemplParam};
 
@@ -13,7 +14,7 @@ macro_rules! walk_list {
 
 #[macro_export] macro_rules! map_list {
     ($mapper: expr, $method: ident, $list: expr) => {
-        $list.to_vec().into_iter().map(|mut f| $mapper.$method(& f)).collect()
+        $list.to_vec().into_iter().map(|f| $mapper.$method(& f)).collect()
     };
 }
 
@@ -204,7 +205,38 @@ pub fn walk_scalar_ty<V: CuToClMap>(mapper: &mut V, scalar_ty: &cpp::ScalarTy) -
 }
 
 pub fn walk_nat<V: CuToClMap>(mapper: &mut V, nat: &crate::ast::Nat) -> crate::ast::Nat {
-    nat.clone()
+    match nat {
+        Nat::Ident(ident) => {
+            if ident.name.contains("threadIdx") {
+                let dimension_index = get_dimension_index_from_x_y_z(&ident.name);
+
+                Nat::App(Ident {
+                    name: "get_local_id".to_string(),
+                    span: None,
+                    is_implicit: false,
+                }, vec![Nat::Lit(dimension_index)])
+            } else if ident.name.contains("blockIdx") {
+                let dimension_index = get_dimension_index_from_x_y_z(&ident.name);
+
+                Nat::App(Ident {
+                    name: "get_group_id".to_string(),
+                    span: None,
+                    is_implicit: false,
+                }, vec![Nat::Lit(dimension_index)])
+            } else {
+                nat.clone()
+            }
+        }
+        Nat::Lit(size) => {
+            Nat::Lit(*size)
+        }
+        Nat::BinOp(op, lhs, rhs) => {
+            Nat::BinOp(op.clone(), Box::new(mapper.map_nat(lhs)), Box::new(mapper.map_nat(rhs)))
+        }
+        Nat::App(ident, params) => {
+            Nat::App(mapper.map_ident(ident), map_list!(mapper, map_nat, params))
+        }
+    }
 }
 
 pub fn walk_buffer_kind<V: CuToClMap>(mapper: &mut V, buffer_kind: &cpp::BufferKind) -> cpp::BufferKind {
@@ -324,7 +356,7 @@ pub fn walk_lit<V: CuToClMap>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
         cpp::Lit::U32(u) => { cpp::Lit::U32(u.clone()) }
         cpp::Lit::F32(f) => { cpp::Lit::F32(f.clone()) }
         cpp::Lit::F64(f) => { cpp::Lit::F64(f.clone()) }
-        cpp::Lit::String(s) => {cpp::Lit::String(s.clone())}
+        cpp::Lit::String(s) => { cpp::Lit::String(s.clone()) }
     }
 }
 
@@ -376,4 +408,16 @@ pub fn walk_templ_param<V: CuToClMap>(mapper: &mut V, templ_param: &cpp::TemplPa
             TemplParam::TyName { name: name.clone() }
         }
     }
+}
+
+fn get_dimension_index_from_x_y_z(identifier: &String) -> usize {
+    let dimension: Vec<char> = identifier.chars().rev().take(1).collect();
+
+    let dimension_index = match dimension.get(0) {
+        None => { panic!("Cannot get Dimension from ThreadIdx") }
+        Some(dimension_axis) => {
+            if 'x' == *dimension_axis { 0 } else if 'y' == *dimension_axis { 1 } else if 'z' == *dimension_axis { 2 } else { panic!("Unknown Dimension Axis {}", dimension_axis) }
+        }
+    };
+    dimension_index
 }
