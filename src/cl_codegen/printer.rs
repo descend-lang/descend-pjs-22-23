@@ -1,6 +1,4 @@
-use crate::cpp_ast::{
-    BinOp, BufferKind, Expr, Item, ParamDecl, ScalarTy, Stmt, TemplateArg, Ty, UnOp,
-};
+use crate::cpp_ast::{BinOp, BufferKind, Expr, Item, ParamDecl, ScalarTy, Stmt, TemplateArg, TemplParam, Ty, UnOp};
 use crate::cpp_ast::{GpuAddrSpace, Lit};
 use core::panic;
 use std::env;
@@ -11,49 +9,38 @@ pub(super) fn print(include_header: &Item, cpu_program: &[Item], gpu_program: &[
     let mut code = String::new();
 
     // print include_header first
-    let res = writeln!(&mut code, "{}", include_header.print_cl(false));
-    if res.is_err() {
-        panic!("{:?}", res);
-    }
+    writeln!(&mut code, "{}", include_header.print_cl(false)).unwrap();
 
-    // print first part of raw string (for kernel programm)
-    let res = writeln!(&mut code, "std::string kernel = R\"(");
-    if res.is_err() {
-        panic!("{:?}", res);
-    }
 
-    let mut kernel_program = "".to_string();
+    // Print Function Declarations for CPU Program
+    cpu_program.iter().
+        filter(|f| { matches!(f, Item::FunDef { .. }) }).for_each(|f| {
+        writeln!(&mut code, "{};", print_function_declaration_from_item(f)).unwrap();
+    });
 
-    // print kernel programm itself
-    for i in gpu_program {
-        let res = writeln!(&mut kernel_program, "{}", i.print_cl(true));
-        if res.is_err() {
-            panic!("{:?}", res);
+        // print first part of raw string (for kernel programm)
+        writeln!(&mut code, "std::string kernel = R\"(").unwrap();
+
+        let mut kernel_program = "".to_string();
+
+        // print kernel programm itself
+        for i in gpu_program {
+            writeln!(&mut kernel_program, "{}", i.print_cl(true)).unwrap();
         }
-    }
 
-    kernel_program = clang_format(&kernel_program);
+        kernel_program = clang_format(&kernel_program);
 
-    let res = writeln!(&mut code, "{}", kernel_program);
-    if res.is_err() {
-        panic!("{:?}", res);
-    }
+        writeln!(&mut code, "{}", kernel_program).unwrap();
 
-    // print end of raw string for kernel programm
-    let res = writeln!(&mut code, ")\";");
-    if res.is_err() {
-        panic!("{:?}", res);
-    }
+        // print end of raw string for kernel programm
+        writeln!(&mut code, ")\";").unwrap();
 
-    for i in cpu_program {
-        let res = writeln!(&mut code, "{}", i.print_cl(false));
-        if res.is_err() {
-            panic!("{:?}", res);
+        for i in cpu_program {
+            writeln!(&mut code, "{}", i.print_cl(false)).unwrap();
         }
-    }
 
-    clang_format(&code)
-}
+        clang_format(&code)
+    }
 
 fn clang_format(code: &str) -> String {
     //If clang-format is not available for user, it's path can be set in this env Variable (e.g. in .cargo/config.toml)
@@ -94,34 +81,45 @@ impl OpenCLPrint for Item {
                 params,
                 ret_ty,
                 body,
-                is_dev_fun,
-                ..
+                is_dev_fun
             } => {
                 use std::fmt::Write;
-                let mut s = String::new();
-                if !templ_params.is_empty() {
-                    panic!("There are no template parameters in OpenCL");
-                }
-                if name.contains("__kernel") {
-                    let res = write!(&mut s, "__kernel void {} (", name);
-                    if res.is_err() {
-                        panic!("{:?}", res);
-                    }
-                } else {
-                    write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
-                }
-                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
-                    write!(&mut s, "{}", p).unwrap();
-                }
-
-                writeln!(&mut s, ") {{").unwrap();
-                writeln!(&mut s, "{}", body.print_cl(is_dev_fun.clone())).unwrap();
-                writeln!(&mut s, "}}").unwrap();
+                let mut s = print_function_declaration(name, templ_params, params, ret_ty, is_dev_fun);
+                writeln!(&mut s, "{}", body.print_cl(*is_dev_fun)).unwrap();
                 s
             }
         }
     }
 }
+
+fn print_function_declaration_from_item(item: &Item) -> String {
+    match item {
+        Item::Include(_) => { panic!("Cannot print declaration for include") }
+        Item::FunDef { name, templ_params, params, ret_ty, is_dev_fun, .. } => { print_function_declaration(name, templ_params, params, ret_ty, is_dev_fun) }
+    }
+}
+
+fn print_function_declaration(name: &String, templ_params: &Vec<TemplParam>, params: &Vec<ParamDecl>, ret_ty: &Ty, is_dev_fun: &bool) -> String {
+    if !templ_params.is_empty() { panic!("Should not contain Function Declarations for Templates!") }
+
+    use std::fmt::Write;
+    let mut s = String::new();
+    if !templ_params.is_empty() {
+        panic!("There are no template parameters in OpenCL");
+    }
+    if name.contains("__kernel") {
+        write!(&mut s, "__kernel ").unwrap();
+    }
+    write!(&mut s, "{} {} ", ret_ty.print_cl(*is_dev_fun), name).unwrap();
+    if let Some(p) = fmt_vec(params, ", ", *is_dev_fun) {
+        write!(&mut s, "({})", p).unwrap();
+    } else {
+        write!(&mut s, "()").unwrap();
+    }
+
+    s
+}
+
 impl OpenCLPrint for Stmt {
     fn print_cl(&self, is_dev_fun: bool) -> String {
         use std::fmt::Write;
@@ -183,7 +181,7 @@ impl OpenCLPrint for Stmt {
                     true_body.print_cl(is_dev_fun),
                     false_body.print_cl(is_dev_fun)
                 )
-                .unwrap();
+                    .unwrap();
                 s
             }
             While { cond, stmt } => format!(
@@ -479,6 +477,7 @@ impl OpenCLPrint for ScalarTy {
     }
 }
 
+// Todo: Evaluate if returning in empty string is better than Option. Could save us many match constructs
 fn fmt_vec<D: OpenCLPrint>(v: &[D], sep: &str, gpu_fun: bool) -> Option<String> {
     use std::fmt::Write;
     if let Some((last, leading)) = v.split_last() {
