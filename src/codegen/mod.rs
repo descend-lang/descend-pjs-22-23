@@ -2455,10 +2455,9 @@ fn gen_ty(ty: &desc::TyKind, mutbl: desc::Mutability) -> cu::Ty {
 
 fn gen_addr_space(addr_space: &desc::Memory) -> Option<cu::GpuAddrSpace> {
     match addr_space {
-        Memory::CpuMem => {None}
+        Memory::CpuMem | Memory::GpuLocal => {None}
         Memory::GpuGlobal => {Some(cu::GpuAddrSpace::Global)}
         Memory::GpuShared => {Some(cu::GpuAddrSpace::Shared)}
-        Memory::GpuLocal => {Some(cu::GpuAddrSpace::Constant)}
         Memory::Ident(_) => {
             panic!("Cannot have Idents for Address Space");
         }
