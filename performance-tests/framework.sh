@@ -7,11 +7,10 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 rm -rf output.log
 
-for i in {1..20}
+for i in {1..500}
 do 
 { time {
-        echo "test"
-        sleep 0.1
+        ./test
     } } 2>> output.log
 done
 
