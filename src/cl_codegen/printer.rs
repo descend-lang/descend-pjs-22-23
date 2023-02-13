@@ -108,9 +108,9 @@ impl OpenCLPrint for Item {
                         panic!("{:?}", res);
                     }
                 } else {
-                    write!(&mut s, "{} {} (", ret_ty.print_cl(is_dev_fun.clone()), name).unwrap();
+                    write!(&mut s, "{} {} (", ret_ty.print_cl(*is_dev_fun), name).unwrap();
                 }
-                if let Some(p) = fmt_vec(params, ", ", is_dev_fun.clone()) {
+                if let Some(p) = fmt_vec(params, ", ", *is_dev_fun) {
                     write!(&mut s, "{}", p).unwrap();
                 }
 
@@ -391,7 +391,7 @@ impl OpenCLPrint for Ty {
         use Ty::*;
         match self {
             Ptr(ty, Some(addr_space)) => format!(
-                "{}, {} *",
+                "{} {} *",
                 addr_space.print_cl(is_dev_fun),
                 ty.print_cl(is_dev_fun)
             ),
