@@ -7,7 +7,7 @@ inplace_vector_add::<'a, 'b>(&'a uniq a, &'b shrd result);
 0
 }
 
-
+// Function is not templated, so we have a case which checks that
 fn inplace_vector_add<a: prv, b: prv>(
     // TODO global fun params into same frame as top level declaration in body
     ha_array: &a uniq cpu.mem [i32; 65536],
