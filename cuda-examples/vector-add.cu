@@ -6,8 +6,8 @@ auto inplace_vector_add(
         const descend::i32 * const hb_array
 ) -> void {
     const auto gpu = descend::gpu_device(0);
-    auto a_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*ha_array);
-    const auto b_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*hb_array);
+    auto a_array = descend::gpu_alloc_copy<descend::array<descend::i32, n>>(&gpu, &*ha_array);
+    const auto b_array = descend::gpu_alloc_copy<descend::array<descend::i32, n>>(&gpu, &*hb_array);
     descend::exec<64, 1024>(&gpu, [] __device__ (
             descend::i32 * const p0,
             const descend::i32 * const p1) -> void {
