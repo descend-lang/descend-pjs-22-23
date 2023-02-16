@@ -22,4 +22,5 @@ do
 done
 
 python3 "${SCRIPT_DIR}/framework.py" "$RUN_PROGRAMM"
+mv "./$RUN_PROGRAMM.csv" "./runs/$RUN_NAMESPACE/"
 rm -rf output.log
