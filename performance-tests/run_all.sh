@@ -16,6 +16,6 @@ do
     do 
         wg=$(python3 -c "print(2**(3+$i))")
         th=$(python3 -c "print(2**(8+$j))")
-        "./framework.sh $PROG ${PROG}_${PLAT}_${wg}_${th}.out"
+        ./framework.sh $PROG ${PROG}_${PLAT}_${wg}_${th}.out
     done
 done
