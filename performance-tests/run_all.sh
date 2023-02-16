@@ -12,10 +12,10 @@ export PLAT="rtx3090"
 
 for i in {1..4}
 do 
-    for j in {1..2}
+    for j in {1..4}
     do 
         wg=$(python3 -c "print(2**(3+$i))")
-        th=$(python3 -c "print(2**(8+$j))")
+        th=$(python3 -c "print(2**(6+$j))")
         ./framework.sh $PROG ${PROG}_${PLAT}_${wg}_${th}.out
     done
 done

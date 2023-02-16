@@ -14,13 +14,13 @@ mkdir -p ./runs/vector_add/
 SOURCE_FILE=vector-add.cu
 SOURCE_DIR=./runs/vector_add
 
-for i in {1..6}
+for i in {1..4}
 do 
-    for j in {1..2}
+    for j in {1..4}
     do 
         # wg=$(( i*16 ))
         wg=$(python3 -c "print(2**(3+$i))")
-        th=$(python3 -c "print(2**(8+$j))")
+        th=$(python3 -c "print(2**(6+$j))")
         echo "wg: $wg, th: $th"
         sed -i "s/WG XX/WG $wg/g" $SOURCE_DIR/$SOURCE_FILE
         sed -i "s/THREADS XX/THREADS $th/g" $SOURCE_DIR/$SOURCE_FILE
