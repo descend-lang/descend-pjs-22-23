@@ -9,6 +9,8 @@ module load foss/2021a
 
 export PLAT="rtx3090"
 
+mkdir -p ./runs/vector_add/
+
 for i in {1..6}
 do 
     for j in {1..2}
