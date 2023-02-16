@@ -15,7 +15,7 @@ do
         echo "wg: $wg, th: $th"
         sed -i "s/WG XX/WG $wg/g" vector-add.cu
         sed -i "s/THREADS XX/THREADS $th/g" vector-add.cu
-        nvcc vector-add.cu -o vector_add_${PLAT}_${wg}_${th} --extended-lambda
+        nvcc vector-add.cu -o vector_add_${PLAT}_${wg}_${th}.out --extended-lambda
         sed -i "s/WG $wg/WG XX/g" vector-add.cu
         sed -i "s/THREADS $th/THREADS XX/g" vector-add.cu
         echo "successfully compiled for wg: $wg and th: $th"
