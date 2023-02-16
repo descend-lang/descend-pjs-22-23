@@ -11,6 +11,9 @@ export PLAT="rtx3090"
 
 mkdir -p ./runs/vector_add/
 
+SOURCE_FILE=vector-add.cu
+SOURCE_DIR=./runs/vector_add
+
 for i in {1..6}
 do 
     for j in {1..2}
@@ -19,11 +22,11 @@ do
         wg=$(python3 -c "print(2**(3+$i))")
         th=$(python3 -c "print(2**(8+$j))")
         echo "wg: $wg, th: $th"
-        sed -i "s/WG XX/WG $wg/g" vector-add.cu
-        sed -i "s/THREADS XX/THREADS $th/g" vector-add.cu
-        nvcc ./runs/vector_add/vector-add.cu -o ./runs/vector_add/vector_add_${PLAT}_${wg}_${th}.out --extended-lambda
-        sed -i "s/WG $wg/WG XX/g" vector-add.cu
-        sed -i "s/THREADS $th/THREADS XX/g" vector-add.cu
+        sed -i "s/WG XX/WG $wg/g" $SOURCE_DIR/$SOURCE_FILE
+        sed -i "s/THREADS XX/THREADS $th/g" $SOURCE_DIR/$SOURCE_FILE
+        nvcc $SOURCE_DIR/$SOURCE_FILE -o $SOURCE_DIR/vector_add_${PLAT}_${wg}_${th}.out --extended-lambda
+        sed -i "s/WG $wg/WG XX/g" $SOURCE_DIR/$SOURCE_FILE
+        sed -i "s/THREADS $th/THREADS XX/g" $SOURCE_DIR/$SOURCE_FILE
         echo "successfully compiled for wg: $wg and th: $th"
     done
 done
