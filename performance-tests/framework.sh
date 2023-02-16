@@ -21,5 +21,5 @@ do
     } } 2>> output.log
 done
 
-python3 "${SCRIPT_DIR}/framework.py" "${SCRIPT_DIR}/${RUN_NAMESPACE}/${RUN_PROGRAMM}"
+python3 "${SCRIPT_DIR}/framework.py" "$RUN_PROGRAMM"
 rm -rf output.log
