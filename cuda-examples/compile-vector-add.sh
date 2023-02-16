@@ -3,6 +3,10 @@ set -e
 set -o pipefail
 # set -x
 
+module load palma/2021a
+module load CUDA
+module load foss/2021a
+
 export PLAT="rtx3090"
 
 for i in {1..4}
