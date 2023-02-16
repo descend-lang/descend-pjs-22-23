@@ -17,7 +17,7 @@ mkdir -p "${SCRIPT_DIR}/${RUN_NAMESPACE}"
 for i in {1..50}
 do 
 { time {
-        ".${SCRIPT_DIR}/$RUN_NAMESPACE/$RUN_PROGRAMM"
+        "${SCRIPT_DIR}/$RUN_NAMESPACE/$RUN_PROGRAMM"
     } } 2>> output.log
 done
 
