@@ -19,7 +19,7 @@ do
 { time {
         # echo "$RUN_NAMESPACE"
         # echo "$RUN_PROGRAMM"
-        # echo ".${SCRIPT_DIR}/$RUN_NAMESPACE/$RUN_PROGRAMM"
+        echo ".${SCRIPT_DIR}/$RUN_NAMESPACE/$RUN_PROGRAMM"
     } } 2>> output.log
 done
 
