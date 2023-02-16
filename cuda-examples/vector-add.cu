@@ -1,7 +1,7 @@
 #include "descend.cuh"
 
-#define WG 64
-#define THREADS 1024
+#define WG XX
+#define THREADS XX
 
 template<std::size_t n>
 auto inplace_vector_add(
@@ -34,6 +34,3 @@ auto main() -> int {
     }
     exit(EXIT_SUCCESS);
 }
-
-// 64 * 1024 Länge (WG 64, T 1024)
-// 128 * 1024 Länge (WG 64, T 1024)
