@@ -1,3 +1,10 @@
+fn main() -[cpu.thread]-> i32 <'a, 'b> {
+    let mut a = create_array::<65536>(1);
+
+    reduce::<65536, 'a, 'b> (&'a uniq a);
+    0
+}
+
 fn reduce<n: nat, a: prv, b: prv>(
   ha_array: &a uniq cpu.mem [i32; n]
 ) -[cpu.thread]-> () <'r, 's, 'c, 'd, 'e, 'f, 'i, 'g, 'h>{
