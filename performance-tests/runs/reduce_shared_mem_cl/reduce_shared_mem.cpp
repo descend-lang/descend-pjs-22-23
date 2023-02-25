@@ -10,7 +10,7 @@ std::string kernel = R"(
 #define THREADS XX
 __kernel void __kernel_0_65536(__global int *const p0) {
   {
-    for (size_t k = 512; k > 0; k = k / 2) {
+    for (size_t k = THREADS / 2; k > 0; k = k / 2) {
       if (get_local_id(0) < k) {
         {
           p0[((get_group_id(0) * THREADS) + (get_local_id(0) - 0))] =
