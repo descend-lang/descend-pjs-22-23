@@ -10,9 +10,9 @@ set -o pipefail
 export PROG="reduce_shared_mem_cl"
 export PLAT="rtx4000"
 
-for i in {1..2}
+for i in {1..4}
 do 
-    for j in {1..2}
+    for j in {1..4}
     do 
         wg=$(python3 -c "print(2**(3+$i))")
         th=$(python3 -c "print(2**(6+$j))")

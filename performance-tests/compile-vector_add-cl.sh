@@ -17,9 +17,9 @@ SOURCE_FILE=vector_add.cpp
 SOURCE_DIR=$SCRIPT_DIR/runs/vector_add_cl
 
 # CUDA
-for i in {1..2}
+for i in {1..4}
 do 
-    for j in {1..2}
+    for j in {1..4}
     do 
         # wg=$(( i*16 ))
         wg=$(python3 -c "print(2**(3+$i))")
