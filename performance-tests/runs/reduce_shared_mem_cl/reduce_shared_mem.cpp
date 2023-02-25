@@ -39,8 +39,8 @@ void reduce65536(descend::i32 *const ha_array) {
     descend::copy_to_host<descend::array<descend::i32, WG * THREADS>>((&a_array),
                                                                ha_array);
 
-    for(int i = 0; i < WG * THREADS; i++) {
-        std::cout << ha_array[i] << std::endl;
-    }
+    // for(int i = 0; i < WG * THREADS; i++) {
+    //     std::cout << ha_array[i] << std::endl;
+    // }
 
 }
