@@ -9,10 +9,12 @@ set -o pipefail
 
 export PLAT="rtx4000"
 
-mkdir -p ./runs/reduce_shared_mem_cl/
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+mkdir -p $SCRIPT_DIR/runs/reduce_shared_mem_cl/
 
 SOURCE_FILE=reduce_shared_mem.cpp
-SOURCE_DIR=./runs/reduce_shared_mem_cl
+SOURCE_DIR=$SCRIPT_DIR/runs/reduce_shared_mem_cl
 
 # CUDA
 for i in {1..4}
@@ -27,7 +29,8 @@ do
         sed -i "s/THREADS XX/THREADS $th/g" $SOURCE_DIR/$SOURCE_FILE
         cd $SOURCE_DIR
         cmake .
-        cmake --build . --target reduce_shared_mem_cl_${PLAT}_${wg}_${th}.out
+        cmake --build . --target reduce_shared_mem
+        mv reduce_shared_mem reduce_shared_mem_cl_${PLAT}_${wg}_${th}.out
         sed -i "s/WG $wg/WG XX/g" $SOURCE_DIR/$SOURCE_FILE
         sed -i "s/THREADS $th/THREADS XX/g" $SOURCE_DIR/$SOURCE_FILE
         echo "successfully compiled for wg: $wg and th: $th"
