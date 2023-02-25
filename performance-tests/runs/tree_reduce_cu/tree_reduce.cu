@@ -11,7 +11,7 @@ __device__ auto red_add(descend::i32 *const fst_half,
 template <std::size_t n> auto reduce(descend::i32 *const ha_array) -> void {
   auto gpu = descend::gpu_device(0);
   auto a_array =
-      descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*ha_array);
+      descend::gpu_alloc_copy<descend::array<descend::i32, n>>(&gpu, &*ha_array);
 
   descend::exec<WG, THREADS>(
       &gpu,
