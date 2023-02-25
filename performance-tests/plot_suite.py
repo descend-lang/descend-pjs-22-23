@@ -5,6 +5,10 @@ import os
 
 ROUND_DECIMALS = 4
 FILE_FORMAT = 'png'
+
+if not os.path.isdir('./runs/plots'):
+    os.mkdir('./runs/plots')
+
 for d in os.scandir('./runs'):
     if not os.path.isdir(d): continue
     if d.name == 'plots': continue
