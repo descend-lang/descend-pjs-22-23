@@ -27,6 +27,7 @@ do
         echo "wg: $wg, th: $th"
         sed -i "s/WG XX/WG $wg/g" $SOURCE_DIR/$SOURCE_FILE
         sed -i "s/THREADS XX/THREADS $th/g" $SOURCE_DIR/$SOURCE_FILE
+        cp -r $SOURCE_DIR/$SOURCE_FILE $SOURCE_DIR/reduce_shared_mem_cl_${PLAT}_${wg}_${th}.cpp
         cd $SOURCE_DIR
         cmake .
         cmake --build . --target reduce_shared_mem
