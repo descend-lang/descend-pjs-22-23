@@ -24,7 +24,7 @@ do
         echo "wg: $wg, th: $th"
         sed -i "s/WG XX/WG $wg/g" $SOURCE_DIR/$SOURCE_FILE
         sed -i "s/THREADS XX/THREADS $th/g" $SOURCE_DIR/$SOURCE_FILE
-        nvcc $SOURCE_DIR/$SOURCE_FILE -std=c++17 -o $SOURCE_DIR/vector_add_${PLAT}_${wg}_${th}.out --extended-lambda
+        nvcc $SOURCE_DIR/$SOURCE_FILE -std=c++14 -o $SOURCE_DIR/vector_add_${PLAT}_${wg}_${th}.out --extended-lambda
         sed -i "s/WG $wg/WG XX/g" $SOURCE_DIR/$SOURCE_FILE
         sed -i "s/THREADS $th/THREADS XX/g" $SOURCE_DIR/$SOURCE_FILE
         echo "successfully compiled for wg: $wg and th: $th"
