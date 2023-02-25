@@ -3,4 +3,4 @@ set -e
 set -o pipefail
 # set -x
 
-sudo apt install nvidia-cuda-toolkit
+sudo apt install -y nvidia-cuda-toolkit

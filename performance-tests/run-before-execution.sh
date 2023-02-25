@@ -3,4 +3,4 @@ set -e
 set -o pipefail
 # set -x
 
-sudo apt install nvidia-driver-525
+sudo apt install -y nvidia-driver-525
