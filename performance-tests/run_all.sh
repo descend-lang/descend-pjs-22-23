@@ -7,8 +7,8 @@ module load palma/2021a
 module load CUDA
 module load foss/2021a
 
-export PROG="vector_add"
-export PLAT="rtx3090"
+export PROG="reduce_shared_mem_cl"
+export PLAT="rtx4000"
 
 for i in {1..4}
 do 
