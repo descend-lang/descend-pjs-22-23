@@ -17,9 +17,9 @@ SOURCE_FILE=reduce_shared_mem.cpp
 SOURCE_DIR=$SCRIPT_DIR/runs/reduce_shared_mem_cl
 
 # CUDA
-for i in {1..4}
+for i in {1..2}
 do 
-    for j in {1..4}
+    for j in {1..2}
     do 
         # wg=$(( i*16 ))
         wg=$(python3 -c "print(2**(3+$i))")

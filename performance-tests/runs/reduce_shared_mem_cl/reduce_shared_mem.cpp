@@ -6,6 +6,8 @@
 descend::i32 main();
 void reduce65536(descend::i32 *const ha_array);
 std::string kernel = R"(
+#define WG XX
+#define THREADS XX
 __kernel void __kernel_0_65536(__global int *const p0) {
   {
     for (size_t k = 512; k > 0; k = k / 2) {
