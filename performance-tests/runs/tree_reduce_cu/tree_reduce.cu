@@ -15,12 +15,8 @@ template <std::size_t n> auto reduce(descend::i32 *const ha_array) -> void {
 
   descend::exec<WG, THREADS>(
       &gpu,
-      [] __device__(descend::i32 * global_failure,
+      [] __device__(
                     descend::i32 *const p0) -> void {
-        if (*global_failure != -1) {
-          return;
-        }
-        __syncthreads();
         for (descend::i32 k = THREADS / 2; k > 0; k = k / 2) {
 
           if (threadIdx.x < k) {
