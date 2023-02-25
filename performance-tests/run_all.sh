@@ -3,9 +3,9 @@ set -e
 set -o pipefail
 # set -x
 
-module load palma/2021a
-module load CUDA
-module load foss/2021a
+# module load palma/2021a
+# module load CUDA
+# module load foss/2021a
 
 export PROG="reduce_shared_mem_cl"
 export PLAT="rtx4000"
