@@ -14,7 +14,7 @@ echo $RUN_PROGRAMM
 
 mkdir -p "${SCRIPT_DIR}/${RUN_NAMESPACE}"
 
-for i in {1..50}
+for i in {1..20}
 do 
 { time {
         "${SCRIPT_DIR}/runs/$RUN_NAMESPACE/$RUN_PROGRAMM"
