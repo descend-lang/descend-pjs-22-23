@@ -12,6 +12,8 @@ with open("output.log", "r") as f:
         data = data.replace("\n\n","+")
         data = data.replace("\n",",")
         data = data.replace("+","\n")
+        data = data.replace("0m","")
+        data = data.replace("s","")
         data = data[1:-1]
         data = "real,user,sys\n" + data
         fout.write(data)
