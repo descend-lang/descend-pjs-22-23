@@ -12,5 +12,5 @@ with open("output.log", "r") as f:
         data = data.replace(",\n\n","+")
         data = data.replace("+","\n")
         data = data[1:-2]
-        # data = "kernel_cu,kernel_cu\n" + data
+        data = "kernel_cu,kernel_cu\n" + data
         fout.write(data)
