@@ -13,5 +13,5 @@ with open("output.log", "r") as f:
                 time_unit = time_unit / 100000
                 out = f"{out}{time_unit}\n"
 
-        data = "kernel\n" + out
+        data = "kernel_cl\n" + out
         fout.write(data)
