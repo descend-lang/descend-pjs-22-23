@@ -8,7 +8,10 @@ with open("output.log", "r") as f:
         out = ""
         for line in data.split("\n"):
             if(line.startswith("time<<<")):
-                out = out + line.split("time<<<")[1] + "\n"
+                time_unit = line.split("time<<<")[1]
+                time_unit = float(time_unit)
+                time_unit = time_unit / 1000000
+                out = f"{out}{time_unit}\n"
 
         data = "kernel\n" + out
         fout.write(data)
