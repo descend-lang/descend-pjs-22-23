@@ -1,3 +1,4 @@
+#define BENCH
 #include "descend.cuh"
 
 #define WG XX
@@ -36,7 +37,7 @@ auto reduce_shared_mem(
     }, &a_array, &out_array);
     descend::copy_to_host<descend::array<descend::i32, WG>>(&out_array, h_output);
 }
-
+descend::Benchmark benchmark{descend::BenchConfig({"reduce_shared_mem"})};
 auto main() -> int {
     const auto ha_array = descend::HeapBuffer<descend::array<descend::i32, WG*THREADS>>(1);
     auto h_output = descend::HeapBuffer<descend::array<descend::i32, WG>>(0);
@@ -48,5 +49,6 @@ auto main() -> int {
     //         exit(EXIT_FAILURE);
     //     }
     // }
+    std::cout << benchmark.avg_to_csv();
     exit(EXIT_SUCCESS);
 }
