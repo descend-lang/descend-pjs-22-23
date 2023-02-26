@@ -1,3 +1,4 @@
+#define BENCH
 #include "descend.cuh"
 
 #define WG XX
@@ -31,7 +32,7 @@ template <std::size_t n> auto reduce(descend::i32 *const ha_array) -> void {
   descend::copy_to_host<descend::array<descend::i32, n>>(&a_array, ha_array);
 }
 
-
+descend::Benchmark benchmark{descend::BenchConfig({"reduce"})};
 auto main() -> int {
     auto ha_array = descend::HeapBuffer<descend::array<descend::i32, WG*THREADS>>(1);
     reduce<WG*THREADS>(&ha_array);
@@ -42,5 +43,6 @@ auto main() -> int {
     //         exit(EXIT_FAILURE);
     //     }
     // }
+    std::cout << benchmark.avg_to_csv();
     exit(EXIT_SUCCESS);
 }

@@ -1,3 +1,4 @@
+#define BENCH
 #include "descend.cuh"
 
 #define WG XX
@@ -20,7 +21,7 @@ auto inplace_vector_add(
     descend::copy_to_host<descend::array<descend::i32, n>>(&a_array, ha_array);
 }
 
-
+descend::Benchmark benchmark{descend::BenchConfig({"inplace_vector_add"})};
 auto main() -> int {
     auto ha_array = descend::HeapBuffer<descend::array<descend::i32, WG*THREADS>>(descend::create_array<WG * THREADS, descend::i32>(0));
     const auto hb_array = descend::HeapBuffer<descend::array<descend::i32, WG*THREADS>>(descend::create_array<WG * THREADS, descend::i32>(1));
@@ -32,5 +33,6 @@ auto main() -> int {
     //         exit(EXIT_FAILURE);
     //     }
     // }
+    std::cout << benchmark.avg_to_csv();
     exit(EXIT_SUCCESS);
 }
