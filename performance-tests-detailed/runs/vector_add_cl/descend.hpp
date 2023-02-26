@@ -98,7 +98,7 @@ namespace descend {
 
         cl_int err;
         // Create command queue for first device
-        const auto queue = new cl::CommandQueue(*context, *device, 0, &err);
+        const auto queue = new cl::CommandQueue(*context, *device, CL_QUEUE_PROFILING_ENABLE, &err);
 
         if(err != CL_SUCCESS) {
             throw std::runtime_error(getErrorString(err));
@@ -313,8 +313,15 @@ namespace descend {
 
             // Block until kernel completion
             event.wait();
+            unsigned long start_time, end_time;
+            event.getProfilingInfo<unsigned long>(CL_PROFILING_COMMAND_START, &start_time);
+            event.getProfilingInfo<unsigned long>(CL_PROFILING_COMMAND_END, &end_time);
 
-            std::cout << "Kernel Finished" << std::endl;
+            // std::cout << "start_time: " << start_time << std::endl;
+            // std::cout << "end_time: " << end_time << std::endl;
+            std::cout << "Kernel Finished, with time:" << end_time - start_time << std::endl;
+            std::cout << "time<<<" << end_time - start_time << std::endl;
+            // std::cout << "Kernel Finished, with time:" << std::endl;
         }
         catch (cl::Error &e) {
             if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
