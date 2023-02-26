@@ -10,5 +10,5 @@ with open("output.log", "r") as f:
             if(line.startswith("time<<<")):
                 out = out + line.split("time<<<")[1] + "\n"
 
-        data = "kernel\n" + data
+        data = "kernel\n" + out
         fout.write(data)
