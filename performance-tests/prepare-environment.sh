@@ -4,7 +4,7 @@ set -o pipefail
 # set -x
 
 sudo apt update
-Sudo apt install clinfo
+sudo apt install clinfo
 sudo apt install opencl-headers ocl-icd-opencl-dev
 sudo apt install nvidia-cuda-toolkit
 sudo apt install cmake
