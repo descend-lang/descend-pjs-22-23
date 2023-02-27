@@ -10,6 +10,7 @@ CL_FOLDER="/home/olivers/code/descend-pjs-22-23/performance-tests-detailed/plot_
 
 FILE_FORMAT = 'png'
 
+
 def plot():
     means_cu = []
     means_cl = []
