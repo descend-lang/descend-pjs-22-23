@@ -18,6 +18,7 @@ __kernel void __kernel_0_(__global int *const p0,
           p1[((get_group_id(0) * THREADS) + get_local_id(0))];
     }
   }
+  barrier(CLK_LOCAL_MEM_FENCE);
 }
 
 )";

@@ -30,6 +30,8 @@ auto reduce_shared_mem(
         if (threadIdx.x < 1)
         {
             p1[blockIdx.x * 1 + threadIdx.x] = tmp[threadIdx.x];
+        } else {
+            
         }
 
         __syncthreads();

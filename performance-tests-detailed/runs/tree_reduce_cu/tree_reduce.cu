@@ -24,6 +24,8 @@ template <std::size_t n> auto reduce(descend::i32 *const ha_array) -> void {
             p0[blockIdx.x * THREADS + threadIdx.x] =
                 p0[blockIdx.x * THREADS + threadIdx.x] +
                 p0[blockIdx.x * THREADS + threadIdx.x + k];
+          } else {
+            
           }
           __syncthreads();
         }
