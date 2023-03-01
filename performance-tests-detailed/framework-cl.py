@@ -10,7 +10,7 @@ with open("output.log", "r") as f:
             if(line.startswith("time<<<")):
                 time_unit = line.split("time<<<")[1]
                 time_unit = float(time_unit)
-                time_unit = time_unit / 100000
+                time_unit = time_unit / 1000000
                 out = f"{out}{time_unit}\n"
 
         data = "kernel_cl\n" + out
