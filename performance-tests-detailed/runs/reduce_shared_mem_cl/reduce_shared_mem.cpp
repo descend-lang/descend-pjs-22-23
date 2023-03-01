@@ -11,9 +11,9 @@ std::string kernel = R"(
 #define THREADS XX
 __kernel void __kernel_0_1004(__global const int *const p0,
                               __global int *const p1) {
-  __local int tmp[4];
+  __local int tmp[THREADS];
   {
-    { tmp[get_local_id(0)] = p0[((get_group_id(0) * 4) + get_local_id(0))]; }
+    { tmp[get_local_id(0)] = p0[((get_group_id(0) * THREADS) + get_local_id(0))]; }
     for (size_t k = (THREADS / 2); k > 0; k = k / 2) {
       if (get_local_id(0) < k) {
         tmp[(get_local_id(0) - 0)] =
