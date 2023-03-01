@@ -1,0 +1,3 @@
+*.cpp
+env
+*.DS_Store
