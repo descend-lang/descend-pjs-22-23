@@ -5,7 +5,7 @@ use crate::ast::{Ident, Nat};
 use crate::cl_codegen::{get_lambda_from_exec, KERNEL_COUNTER, map_exec};
 use crate::cpp_ast::{Item, Lit, TemplateArg, TemplParam, Ty};
 
-pub struct MonomorphizeVisitor<'b> {
+pub struct monomorphize_visitor<'b> {
     pub(crate) template_args: Vec<cpp::TemplateArg>,
     pub(crate) template_fun: &'b cpp::Item,
     pub(crate) values_for_names: HashMap<String, cpp::TemplateArg>,
@@ -15,7 +15,7 @@ pub struct MonomorphizeVisitor<'b> {
     pub(crate) c_program: &'b mut Vec<cpp::Item>,
 }
 
-impl<'b> MonomorphizeVisitor<'b> {
+impl<'b> monomorphize_visitor<'b> {
     fn find_names_for_template_args(&mut self) {
         if let cpp::Item::FunDef { templ_params, .. } = self.template_fun {
             for i in 0..templ_params.len() {
@@ -35,7 +35,7 @@ impl<'b> MonomorphizeVisitor<'b> {
     }
 }
 
-impl<'b> cu_to_cl_map for MonomorphizeVisitor<'b> {
+impl<'b> cu_to_cl_map for monomorphize_visitor<'b> {
     fn map_item(&mut self, item: &cpp::Item) -> Option<cpp::Item> {
         self.find_names_for_template_args();
         match item {

@@ -57,7 +57,7 @@ impl<'a> CopyVisitor<'a> {
 
             if let Some(template_fun) = cpp_fun_def {
                 let mangled_function_name = monomorphize_visitor::mangle_function_name(fun_identifier.clone(), &template_args);
-                let mut monomorphizer = monomorphize_visitor::MonomorphizeVisitor {
+                let mut monomorphizer = monomorphize_visitor::monomorphize_visitor {
                     template_args,
                     template_fun,
                     values_for_names: HashMap::new(),
