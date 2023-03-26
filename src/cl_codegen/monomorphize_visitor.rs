@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr, walk_nat, walk_ty};
+use crate::cl_codegen::cuda_to_cl_mapper::{cu_to_cl_map, walk_expr, walk_nat, walk_ty};
 use crate::{cpp_ast as cpp, map_list};
 use crate::ast::{Ident, Nat};
 use crate::cl_codegen::{get_lambda_from_exec, KERNEL_COUNTER, map_exec};
@@ -35,7 +35,7 @@ impl<'b> MonomorphizeVisitor<'b> {
     }
 }
 
-impl<'b> CuToClMap for MonomorphizeVisitor<'b> {
+impl<'b> cu_to_cl_map for MonomorphizeVisitor<'b> {
     fn map_item(&mut self, item: &cpp::Item) -> Option<cpp::Item> {
         self.find_names_for_template_args();
         match item {

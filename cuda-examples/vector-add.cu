@@ -1,10 +1,10 @@
 #include "descend.cuh"
 
 template<std::size_t n>
-auto inplace_vector_add(
+void inplace_vector_add(
         descend::i32 * const ha_array,
         const descend::i32 * const hb_array
-) -> void {
+) {
     const auto gpu = descend::gpu_device(0);
     auto a_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*ha_array);
     const auto b_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*hb_array);

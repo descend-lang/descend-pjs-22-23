@@ -28,7 +28,7 @@ macro_rules! map_opt {
     }
 }
 
-pub trait CuToClMap: Sized {
+pub trait cu_to_cl_map: Sized {
     fn map_item(&mut self, item: &cpp::Item) -> Option<cpp::Item> {
         walk_item(self, item)
     }
@@ -77,7 +77,7 @@ pub trait CuToClMap: Sized {
     }
 }
 
-pub fn walk_item<V: CuToClMap>(mapper: &mut V, item: &cpp::Item) -> Option<cpp::Item> {
+pub fn walk_item<V: cu_to_cl_map>(mapper: &mut V, item: &cpp::Item) -> Option<cpp::Item> {
     match item {
         cpp::Item::Include(name) => { Some(cpp::Item::Include(name.clone())) }
         cpp::Item::FunDef { name, params, templ_params, ret_ty, body, is_dev_fun } => {
@@ -98,11 +98,11 @@ pub fn walk_item<V: CuToClMap>(mapper: &mut V, item: &cpp::Item) -> Option<cpp::
     }
 }
 
-pub fn walk_param_decl<V: CuToClMap>(mapper: &mut V, param_decl: &cpp::ParamDecl) -> cpp::ParamDecl {
+pub fn walk_param_decl<V: cu_to_cl_map>(mapper: &mut V, param_decl: &cpp::ParamDecl) -> cpp::ParamDecl {
     cpp::ParamDecl { name: param_decl.name.clone(), ty: mapper.map_ty(&param_decl.ty) }
 }
 
-pub fn walk_ty<V: CuToClMap>(mapper: &mut V, ty: &cpp::Ty) -> cpp::Ty {
+pub fn walk_ty<V: cu_to_cl_map>(mapper: &mut V, ty: &cpp::Ty) -> cpp::Ty {
     match ty {
         cpp::Ty::Scalar(scalar_ty) => {
             cpp::Ty::Scalar(mapper.map_scalar_ty(scalar_ty))
@@ -141,7 +141,7 @@ pub fn walk_ty<V: CuToClMap>(mapper: &mut V, ty: &cpp::Ty) -> cpp::Ty {
     }
 }
 
-pub fn walk_stmt<V: CuToClMap>(mapper: &mut V, stmt: &cpp::Stmt) -> cpp::Stmt {
+pub fn walk_stmt<V: cu_to_cl_map>(mapper: &mut V, stmt: &cpp::Stmt) -> cpp::Stmt {
     match stmt {
         cpp::Stmt::Skip => { cpp::Stmt::Skip }
         cpp::Stmt::VarDecl { name, ty, addr_space, expr, } => {
@@ -189,7 +189,7 @@ pub fn walk_stmt<V: CuToClMap>(mapper: &mut V, stmt: &cpp::Stmt) -> cpp::Stmt {
     }
 }
 
-pub fn walk_scalar_ty<V: CuToClMap>(mapper: &mut V, scalar_ty: &cpp::ScalarTy) -> cpp::ScalarTy {
+pub fn walk_scalar_ty<V: cu_to_cl_map>(mapper: &mut V, scalar_ty: &cpp::ScalarTy) -> cpp::ScalarTy {
     match scalar_ty {
         cpp::ScalarTy::Auto => { panic!("Cannot Map Auto Types") }
         cpp::ScalarTy::Void => { cpp::ScalarTy::Void }
@@ -204,7 +204,7 @@ pub fn walk_scalar_ty<V: CuToClMap>(mapper: &mut V, scalar_ty: &cpp::ScalarTy) -
     }
 }
 
-pub fn walk_nat<V: CuToClMap>(mapper: &mut V, nat: &crate::ast::Nat) -> crate::ast::Nat {
+pub fn walk_nat<V: cu_to_cl_map>(mapper: &mut V, nat: &crate::ast::Nat) -> crate::ast::Nat {
     match nat {
         Nat::Ident(ident) => {
             if ident.name.contains("threadIdx") {
@@ -239,7 +239,7 @@ pub fn walk_nat<V: CuToClMap>(mapper: &mut V, nat: &crate::ast::Nat) -> crate::a
     }
 }
 
-pub fn walk_buffer_kind<V: CuToClMap>(mapper: &mut V, buffer_kind: &cpp::BufferKind) -> cpp::BufferKind {
+pub fn walk_buffer_kind<V: cu_to_cl_map>(mapper: &mut V, buffer_kind: &cpp::BufferKind) -> cpp::BufferKind {
     match buffer_kind {
         cpp::BufferKind::CpuMem => { cpp::BufferKind::CpuMem }
         cpp::BufferKind::GpuGlobal => { cpp::BufferKind::GpuGlobal }
@@ -247,7 +247,7 @@ pub fn walk_buffer_kind<V: CuToClMap>(mapper: &mut V, buffer_kind: &cpp::BufferK
     }
 }
 
-pub fn walk_gpu_addr_space<V: CuToClMap>(mapper: &mut V, gpu_addr_space: &cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
+pub fn walk_gpu_addr_space<V: cu_to_cl_map>(mapper: &mut V, gpu_addr_space: &cpp::GpuAddrSpace) -> cpp::GpuAddrSpace {
     match gpu_addr_space {
         cpp::GpuAddrSpace::Global => { cpp::GpuAddrSpace::Global }
         //GpuAddrSpace::Local => {}
@@ -256,7 +256,7 @@ pub fn walk_gpu_addr_space<V: CuToClMap>(mapper: &mut V, gpu_addr_space: &cpp::G
     }
 }
 
-pub fn walk_expr<V: CuToClMap>(mapper: &mut V, expr: &cpp::Expr) -> cpp::Expr {
+pub fn walk_expr<V: cu_to_cl_map>(mapper: &mut V, expr: &cpp::Expr) -> cpp::Expr {
     match expr {
         cpp::Expr::Empty => { cpp::Expr::Empty }
         cpp::Expr::Ident(ident) => { cpp::Expr::Ident(ident.clone()) }
@@ -341,15 +341,15 @@ pub fn walk_expr<V: CuToClMap>(mapper: &mut V, expr: &cpp::Expr) -> cpp::Expr {
     }
 }
 
-pub fn walk_ident<V: CuToClMap>(mapper: &mut V, ident: &crate::ast::Ident) -> crate::ast::Ident {
+pub fn walk_ident<V: cu_to_cl_map>(mapper: &mut V, ident: &crate::ast::Ident) -> crate::ast::Ident {
     ident.clone()
 }
 
-pub fn walk_bin_op_nat<V: CuToClMap>(mapper: &mut V, bin_op_nat: &crate::ast::BinOpNat) -> crate::ast::BinOpNat {
+pub fn walk_bin_op_nat<V: cu_to_cl_map>(mapper: &mut V, bin_op_nat: &crate::ast::BinOpNat) -> crate::ast::BinOpNat {
     bin_op_nat.clone()
 }
 
-pub fn walk_lit<V: CuToClMap>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
+pub fn walk_lit<V: cu_to_cl_map>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
     match lit {
         cpp::Lit::Bool(b) => { cpp::Lit::Bool(b.clone()) }
         cpp::Lit::I32(i) => { cpp::Lit::I32(i.clone()) }
@@ -360,14 +360,14 @@ pub fn walk_lit<V: CuToClMap>(mapper: &mut V, lit: &cpp::Lit) -> cpp::Lit {
     }
 }
 
-pub fn walk_un_op<V: CuToClMap>(mapper: &mut V, un_op: &cpp::UnOp) -> cpp::UnOp {
+pub fn walk_un_op<V: cu_to_cl_map>(mapper: &mut V, un_op: &cpp::UnOp) -> cpp::UnOp {
     match un_op {
         cpp::UnOp::Not => { cpp::UnOp::Not }
         cpp::UnOp::Neg => { cpp::UnOp::Neg }
     }
 }
 
-pub fn walk_bin_op<V: CuToClMap>(mapper: &mut V, bin_op: &cpp::BinOp) -> cpp::BinOp {
+pub fn walk_bin_op<V: cu_to_cl_map>(mapper: &mut V, bin_op: &cpp::BinOp) -> cpp::BinOp {
     match bin_op {
         cpp::BinOp::Add => { cpp::BinOp::Add }
         cpp::BinOp::Sub => { cpp::BinOp::Sub }
@@ -385,7 +385,7 @@ pub fn walk_bin_op<V: CuToClMap>(mapper: &mut V, bin_op: &cpp::BinOp) -> cpp::Bi
     }
 }
 
-pub fn walk_template_arg<V: CuToClMap>(mapper: &mut V, template_arg: &cpp::TemplateArg) -> cpp::TemplateArg {
+pub fn walk_template_arg<V: cu_to_cl_map>(mapper: &mut V, template_arg: &cpp::TemplateArg) -> cpp::TemplateArg {
     match template_arg {
         cpp::TemplateArg::Expr(expr) => {
             cpp::TemplateArg::Expr(mapper.map_expr(expr))
@@ -396,7 +396,7 @@ pub fn walk_template_arg<V: CuToClMap>(mapper: &mut V, template_arg: &cpp::Templ
     }
 }
 
-pub fn walk_templ_param<V: CuToClMap>(mapper: &mut V, templ_param: &cpp::TemplParam) -> cpp::TemplParam {
+pub fn walk_templ_param<V: cu_to_cl_map>(mapper: &mut V, templ_param: &cpp::TemplParam) -> cpp::TemplParam {
     match templ_param {
         TemplParam::Value { param_name, ty } => {
             TemplParam::Value {

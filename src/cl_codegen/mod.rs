@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{codegen as cu_codegen, map_list};
 use crate::ast as desc;
-use crate::cl_codegen::cuda_to_cl_mapper::{CuToClMap, walk_expr};
+use crate::cl_codegen::cuda_to_cl_mapper::{cu_to_cl_map, walk_expr};
 use crate::cpp_ast as cpp;
 use crate::cpp_ast::{Expr, Item, TemplateArg};
 
@@ -86,7 +86,7 @@ impl<'a> CopyVisitor<'a> {
     }
 }
 
-impl<'a> CuToClMap for CopyVisitor<'a> {
+impl<'a> cu_to_cl_map for CopyVisitor<'a> {
     fn map_expr(&mut self, expr: &cpp::Expr) -> cpp::Expr {
         match expr {
             cpp::Expr::FunCall { fun, template_args, args } => {
