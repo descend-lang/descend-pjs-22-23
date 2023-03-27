@@ -337,8 +337,10 @@ namespace descend {
         }
     }
     template<std::size_t n, typename DescendType>
-    descend::array<DescendType, n> create_array() {
-        return new std::array<DescendType, n>();
+    descend::array<DescendType, n> create_array(DescendType init_value) {
+        auto ret_val = new std::array<DescendType, n>();
+        ret_val->fill(init_value);
+        return ret_val;
     }
 }
 
