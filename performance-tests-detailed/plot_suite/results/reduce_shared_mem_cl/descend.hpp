@@ -96,19 +96,9 @@ namespace descend {
 
         const auto device = new cl::Device(devices[device_id]);
 
-        /* Check if cl_khr_fp64 (Khronos official double precision floating point precision extension)
-          * is listed under extensions.
-          * For AMD, maybe check for cl_amd_fp64
-         */
-        string device_extensions;
-        device->getInfo(CL_DEVICE_EXTENSIONS, &device_extensions);
-        if (!device_extensions.find("cl_khr_fp64")) {
-            throw std::runtime_error("fp64 extension not installed");
-        }
-
         cl_int err;
         // Create command queue for first device
-        const auto queue = new cl::CommandQueue(*context, *device, 0, &err);
+        const auto queue = new cl::CommandQueue(*context, *device, CL_QUEUE_PROFILING_ENABLE, &err);
 
         if(err != CL_SUCCESS) {
             throw std::runtime_error(getErrorString(err));
@@ -327,8 +317,11 @@ namespace descend {
             event.getProfilingInfo<unsigned long>(CL_PROFILING_COMMAND_START, &start_time);
             event.getProfilingInfo<unsigned long>(CL_PROFILING_COMMAND_END, &end_time);
 
-            std::cout << "Kernel Finished, with time:" << (start_time - end_time) << std::endl;
-
+            // std::cout << "start_time: " << start_time << std::endl;
+            // std::cout << "end_time: " << end_time << std::endl;
+            std::cout << "Kernel Finished, with time:" << end_time - start_time << std::endl;
+            std::cout << "time<<<" << end_time - start_time << std::endl;
+            // std::cout << "Kernel Finished, with time:" << std::endl;
         }
         catch (cl::Error &e) {
             if (e.err() == CL_BUILD_PROGRAM_FAILURE) {
@@ -340,6 +333,7 @@ namespace descend {
             }
         }
     }
+
     template<std::size_t n, typename DescendType>
     descend::array<DescendType, n> create_array(DescendType init_value) {
         auto ret_val = new std::array<DescendType, n>();

@@ -21,9 +21,9 @@ auto scan(
         descend::i32 * const h_block_sums
 ) -> void {
     const auto gpu = descend::gpu_device(0);
-    const auto a_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, ha_array);
-    auto out_array = descend::gpu_alloc<descend::array<descend::i32, n>>(&gpu, &*h_output);
-    auto block_sums = descend::gpu_alloc<descend::array<descend::i32, gridDim>>(&gpu, &*h_block_sums);
+    const auto a_array = descend::gpu_alloc_copy<descend::array<descend::i32, n>>(&gpu, ha_array);
+    auto out_array = descend::gpu_alloc_copy<descend::array<descend::i32, n>>(&gpu, &*h_output);
+    auto block_sums = descend::gpu_alloc_copy<descend::array<descend::i32, gridDim>>(&gpu, &*h_block_sums);
     descend::exec<gridDim, 32>(&gpu, [] __device__ (
             const descend::i32 * const p0,
             descend::i32 * const p1,

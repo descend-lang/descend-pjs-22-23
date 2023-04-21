@@ -1,0 +1,10 @@
+module load palma/2021a
+module load CUDA
+module load foss/2021a
+
+nvcc vector-add.cu -o test --extended-lambda
+
+
+module load libglvnd/1.3.3
+
+module load CMake/3.20.1
